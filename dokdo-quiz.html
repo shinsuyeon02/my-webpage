@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>독도의 날 퀴즈</title>
+<style>
+:root{--sky1:#5cc3ff;--sky2:#c9efff;--sea1:#1a8fe0;--sea2:#0b5fb0;--sea3:#08407f;--card:rgba(255,255,255,.93);--text:#12304d;--sub:#4f6d8c;--pri:#1f78d1;--gold:#ffb400;--ok:#14935a;--okbg:#dcf7e9;--no:#d03b3b;--nobg:#fde6e6;--line:#bcd7ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sky1:#0a1a3a;--sky2:#27407a;--sea1:#12508f;--sea2:#0b3769;--sea3:#071f40;--card:rgba(14,30,58,.92);--text:#eaf3fc;--sub:#a5bdd8;--pri:#6bb4f5;--gold:#ffd04d;--ok:#4cd08b;--okbg:#17382b;--no:#ff8080;--nobg:#442227;--line:#2f4a6c}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;color:var(--text)}
+body{background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 55%,var(--sea1) 55.1%,var(--sea2) 100%);background-attachment:fixed;overflow-x:hidden}
+.sun{position:fixed;top:6%;right:8%;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#fff6b0,#ffd54a 60%,rgba(255,213,74,0) 72%);animation:pulse 4s ease-in-out infinite;z-index:0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sun{background:radial-gradient(circle,#fff,#dfe8ff 55%,rgba(223,232,255,0) 70%)}}
+@keyframes pulse{50%{transform:scale(1.12)}}
+.gull{position:fixed;left:-60px;width:44px;z-index:0;animation:fly 18s linear infinite}
+.gull svg{width:100%;animation:flap .6s ease-in-out infinite alternate;transform-origin:center}
+.gull:nth-of-type(3){top:14%;animation-duration:22s;animation-delay:-8s;width:34px}
+.gull:nth-of-type(4){top:24%;animation-duration:26s;animation-delay:-15s;width:28px}
+.gull:nth-of-type(2){top:9%}
+@keyframes fly{to{transform:translateX(calc(100vw + 120px))}}
+@keyframes flap{to{transform:scaleY(.55)}}
+.waves{position:fixed;left:0;right:0;bottom:0;height:150px;z-index:0;pointer-events:none}
+.waves svg{position:absolute;left:0;bottom:0;width:200%;height:100%;animation:wave 12s linear infinite}
+.waves svg:nth-child(2){animation-duration:8s;opacity:.7;bottom:-8px}
+.waves svg:nth-child(3){animation-duration:5s;opacity:.9;bottom:-16px}
+@keyframes wave{to{transform:translateX(-50%)}}
+.wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:18px 16px 140px}
+.card{background:var(--card);border-radius:24px;padding:24px;border:2px solid rgba(255,255,255,.6);box-shadow:0 10px 30px rgba(5,40,90,.28);backdrop-filter:blur(6px)}
+.hero{text-align:center}
+.hero svg{width:100%;max-width:420px;height:auto}
+h1{font-size:2rem;margin:4px 0 8px;background:linear-gradient(90deg,#1f78d1,#14b5c9,#ffb400);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900}
+.sub{color:var(--sub);margin:0 0 20px;line-height:1.7}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-weight:800}
+.top span:last-child{background:linear-gradient(90deg,#ffb400,#ff7a00);color:#fff;padding:4px 14px;border-radius:20px}
+.bar{height:12px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#14b5c9,#1f78d1,#ffb400);transition:width .4s}
+.q{font-size:1.4rem;font-weight:800;line-height:1.5;margin:0 0 18px}
+.opts{display:grid;gap:12px}
+.opt{font:inherit;font-size:1.15rem;text-align:left;padding:16px 18px;min-height:60px;border:2px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.opt:hover:not(:disabled){box-shadow:0 4px 14px rgba(31,120,209,.3);border-color:var(--pri)}
+.opt:active{transform:scale(.98)}
+.opt.ok{border-color:var(--ok);background:var(--okbg);animation:pop .4s}
+.opt.no{border-color:var(--no);background:var(--nobg);animation:shake .3s}
+.opt:disabled{cursor:default}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@keyframes pop{50%{transform:scale(1.04)}}
+.msg{min-height:34px;margin:16px 0 0;font-size:1.25rem;font-weight:800}
+.msg.ok{color:var(--ok)}.msg.no{color:var(--no)}
+.btn{font:inherit;font-size:1.2rem;font-weight:900;padding:14px 30px;border:0;border-radius:30px;background:linear-gradient(135deg,#1f9be0,#1f64d1);color:#fff;cursor:pointer;min-height:56px;box-shadow:0 6px 16px rgba(31,100,209,.4)}
+.btn:active{transform:scale(.97)}
+.btn.hide{display:none}
+.row{display:flex;justify-content:flex-end;margin-top:12px}
+.score{font-size:3.6rem;font-weight:900;color:var(--gold);margin:6px 0;text-shadow:0 3px 0 rgba(0,0,0,.12)}
+.center{text-align:center}
+.tag{display:inline-block;font-size:.85rem;font-weight:800;color:#fff;background:var(--pri);padding:2px 10px;border-radius:12px;margin-left:6px;vertical-align:middle}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media (max-width:520px){
+ .wrap{padding:12px 10px 120px}
+ .card{padding:16px;border-radius:18px}
+ h1{font-size:1.5rem}
+ .q{font-size:1.15rem}
+ .opt{font-size:1rem;padding:14px;min-height:54px}
+ .btn{font-size:1.05rem;padding:12px 22px;min-height:50px}
+ .row .btn,#go,#retry{width:100%}
+ .score{font-size:2.8rem}
+ .sun{width:60px;height:60px}
+ .waves{height:110px}
+}
+@media (max-height:500px) and (orientation:landscape){.wrap{padding-bottom:90px}.hero svg{max-width:240px}}
+[hidden]{display:none!important}
+.fx{position:fixed;z-index:5;pointer-events:none;font-size:1.6rem}
+</style>
+</head>
+<body>
+<div class="sun"></div>
+<div class="gull"><svg viewBox="0 0 40 16"><path d="M1 12 Q10 0 20 10 Q30 0 39 12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>
+<div class="gull"><svg viewBox="0 0 40 16"><path d="M1 12 Q10 0 20 10 Q30 0 39 12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>
+<div class="gull"><svg viewBox="0 0 40 16"><path d="M1 12 Q10 0 20 10 Q30 0 39 12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>
+<div class="waves">
+ <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 60 Q150 20 300 60 T600 60 T900 60 T1200 60 V150 H0Z" fill="#1a8fe0"/></svg>
+ <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 70 Q150 30 300 70 T600 70 T900 70 T1200 70 V150 H0Z" fill="#0b5fb0"/></svg>
+ <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 85 Q150 50 300 85 T600 85 T900 85 T1200 85 V150 H0Z" fill="#08407f"/></svg>
+</div>
+
+<div class="wrap">
+  <div class="card hero center" id="start">
+    <svg viewBox="0 0 320 120" aria-hidden="true">
+      <rect x="0" y="92" width="320" height="28" rx="14" fill="#1a8fe0"/>
+      <path d="M40 96 L95 34 L112 46 L135 96Z" fill="#7b6f63"/><path d="M95 34 L112 46 L135 96 L108 96Z" fill="#5f554b"/>
+      <path d="M150 96 L205 22 L225 38 L262 96Z" fill="#8a7d70"/><path d="M205 22 L225 38 L262 96 L222 96Z" fill="#6a5f54"/>
+      <path d="M85 50 q10 -6 18 2 M60 70 q8 -4 14 3" stroke="#3f9a4a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <rect x="203" y="4" width="3" height="20" fill="#eee"/><rect x="206" y="4" width="16" height="11" fill="#fff" stroke="#999" stroke-width=".6"/><path d="M211 9.5 A3 3 0 0 1 217 9.5 Z" fill="#cd2e3a"/><path d="M211 9.5 A3 3 0 0 0 217 9.5 Z" fill="#0047a0"/><g fill="#111"><rect x="207.4" y="5.2" width="3" height="1.2"/><rect x="217.6" y="5.2" width="3" height="1.2"/><rect x="207.4" y="12.6" width="3" height="1.2"/><rect x="217.6" y="12.6" width="3" height="1.2"/></g>
+      <path d="M0 100 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" stroke="#fff" stroke-width="3" fill="none" opacity=".7"/>
+    </svg>
+    <h1>독도의 날 퀴즈</h1>
+    <p class="sub">10월 25일은 독도의 날! 🇰🇷<br>독도에 대한 10문제를 풀고 독도 박사에 도전해 보세요.<br>틀려도 괜찮아요. 다시 생각해 보면 돼요!</p>
+    <button class="btn" id="go">🌊 시작하기</button>
+  </div>
+
+  <div class="card" id="play" hidden>
+    <div class="top"><span id="no">1 / 10</span><span id="sc">⭐ 0</span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <p class="q"><span id="q"></span><span class="tag" id="tag" hidden>복습 문제</span></p>
+    <div class="opts" id="opts"></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div class="row"><button class="btn hide" id="next">다음 문제</button></div>
+  </div>
+
+  <div class="card center" id="end" hidden>
+    <div style="font-size:3rem" id="trophy">🏆</div>
+    <h1>퀴즈 끝!</h1>
+    <div class="score" id="final"></div>
+    <p class="sub" id="comment"></p>
+    <button class="btn" id="retry">🔄 다시 도전하기</button>
+  </div>
+</div>
+
+<script>
+var POOL=[
+ {q:"독도의 날은 언제일까요?",a:"10월 25일",w:["1월 1일","3월 1일","8월 15일"]},
+ {q:"독도가 있는 바다는 어디일까요?",a:"동해",w:["서해","남해","태평양"]},
+ {q:"우리나라에서 가장 동쪽에 있는 땅은 어디일까요?",a:"독도",w:["제주도","강화도","거제도"]},
+ {q:"독도는 어느 곳에 속해 있을까요? (행정구역)",a:"경상북도 울릉군",w:["제주특별자치도","전라남도 신안군","강원특별자치도 속초시"]},
+ {q:"독도의 큰 섬 두 개의 이름은 무엇일까요?",a:"동도와 서도",w:["남도와 북도","위도와 아래도","큰도와 작은도"]},
+ {q:"독도에서 가장 가까운 큰 섬은 어디일까요?",a:"울릉도",w:["거제도","백령도","진도"]},
+ {q:"독도에서 많이 볼 수 있는 새는 무엇일까요?",a:"괭이갈매기",w:["독수리","참새","펭귄"]},
+ {q:"신라 장군 이사부가 512년에 우리 땅으로 만든 나라는 어디일까요?",a:"우산국",w:["가야","발해","탐라"]},
+ {q:"조선 시대에 일본에 건너가 독도가 우리 땅임을 알린 사람은 누구일까요?",a:"안용복",w:["이순신","김유신","장보고"]},
+ {q:"1900년 대한제국이 독도를 울도군에 속한다고 밝힌 문서는 무엇일까요?",a:"칙령 제41호",w:["훈민정음","대동여지도","독립선언서"]},
+ {q:"독도는 울릉도에서 약 몇 km 떨어져 있을까요?",a:"약 87km",w:["약 8km","약 300km","약 1,000km"]},
+ {q:"독도는 나라에서 어떤 보호를 받고 있을까요?",a:"천연기념물",w:["놀이공원","공업단지","골프장"]},
+ {q:"독도는 어떻게 만들어진 섬일까요?",a:"바다 속 화산이 솟아서",w:["산호가 쌓여서","빙하가 녹아서","모래가 쌓여서"]},
+ {q:"독도를 지키자는 마음을 담은 노래의 제목은 무엇일까요?",a:"독도는 우리 땅",w:["섬 집 아기","아리랑 고개","반짝반짝 작은 별"]},
+ {q:"독도의 옛 이름은 무엇일까요?",a:"우산도",w:["마라도","가파도","비양도"]},
+ {q:"'독도'의 '독'은 어떤 뜻에서 왔다고 할까요?",a:"돌 (돌섬)",w:["모래","얼음","나무"]},
+ {q:"독도에서 피는 바닷가 꽃은 무엇일까요?",a:"해국",w:["튤립","해바라기","장미"]},
+ {q:"독도가 우리 땅이라고 적힌 옛 책은 무엇일까요?",a:"세종실록지리지",w:["홍길동전","난중일기","동의보감"]},
+ {q:"독도 동도에는 뱃길을 밝혀 주는 어떤 시설이 있을까요?",a:"등대",w:["놀이공원","백화점","스키장"]},
+ {q:"울릉도와 독도 바다에서 많이 잡히는 해산물은 무엇일까요?",a:"오징어",w:["연어","고래","상어"]},
+ {q:"독도에서 늘 휘날리는 우리나라 국기의 이름은 무엇일까요?",a:"태극기",w:["오륜기","유엔기","해적기"]},
+ {q:"6·25 전쟁 뒤 독도를 지킨 민간 대원들의 이름은 무엇일까요?",a:"독도의용수비대",w:["어린이기자단","해적단","소방대"]},
+ {q:"독도처럼 바다 가운데 물로 둘러싸인 땅을 무엇이라고 할까요?",a:"섬",w:["산","호수","사막"]}
+];
+var $=function(i){return document.getElementById(i)};
+var cur=0,score=0,firstTry=true,items=[],prevIds=null,ctx=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+
+function beep(ok){
+  try{
+    ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+    var notes=ok?[[660,0],[880,.12],[1175,.24]]:[[220,0],[165,.15]];
+    notes.forEach(function(n){
+      var o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+n[1];
+      o.type=ok?"sine":"square";o.frequency.value=n[0];
+      g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+      o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.22);
+    });
+  }catch(e){}
+}
+
+function burst(el){
+  var r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,E=["🎉","⭐","✨","🌊","🇰🇷","🐦"];
+  for(var i=0;i<16;i++){
+    var s=document.createElement("span");s.className="fx";s.textContent=E[i%E.length];
+    s.style.left=cx+"px";s.style.top=cy+"px";document.body.appendChild(s);
+    var a=Math.random()*Math.PI*2,d=70+Math.random()*110;
+    s.animate([{transform:"translate(0,0) scale(.6)",opacity:1},{transform:"translate("+Math.cos(a)*d+"px,"+(Math.sin(a)*d-40)+"px) scale(1.3)",opacity:0}],{duration:900,easing:"ease-out"}).onfinish=(function(n){return function(){n.remove()}})(s);
+  }
+}
+
+function show(id){["start","play","end"].forEach(function(s){$(s).hidden=(s!==id)})}
+
+function pickSet(){
+  var ids=POOL.map(function(_,i){return i}),chosen;
+  if(!prevIds){chosen=ids.slice(0,10).map(function(i){return {i:i,old:false}});return chosen}
+  var k=1+Math.floor(Math.random()*3);               // 이전 문제 1~3개만 다시 출제
+  var olds=shuffle(prevIds).slice(0,k);
+  var fresh=shuffle(ids.filter(function(i){return prevIds.indexOf(i)<0}));
+  if(fresh.length<10-k){fresh=fresh.concat(shuffle(ids.filter(function(i){return prevIds.indexOf(i)>=0&&olds.indexOf(i)<0})))}
+  chosen=olds.map(function(i){return {i:i,old:true}}).concat(fresh.slice(0,10-k).map(function(i){return {i:i,old:false}}));
+  return shuffle(chosen);
+}
+
+function start(){
+  var set=pickSet();
+  prevIds=set.map(function(c){return c.i});
+  items=set.map(function(c){var x=POOL[c.i];return {q:x.q,a:x.a,old:c.old&&true,o:shuffle([x.a].concat(x.w))}});
+  cur=0;score=0;show("play");render();
+}
+
+function render(){
+  var it=items[cur];firstTry=true;
+  $("no").textContent=(cur+1)+" / 10";
+  $("sc").textContent="⭐ "+score;
+  $("bar").style.width=(cur/10*100)+"%";
+  $("q").textContent=it.q;
+  $("tag").hidden=!(it.old&&prevIds&&window._retried);
+  $("msg").textContent="";$("msg").className="msg";
+  $("next").classList.add("hide");
+  $("next").textContent=cur===9?"결과 보기":"다음 문제";
+  var box=$("opts");box.innerHTML="";
+  it.o.forEach(function(t,i){
+    var b=document.createElement("button");
+    b.className="opt";b.textContent=(i+1)+". "+t;
+    b.onclick=function(){pick(b,t)};
+    box.appendChild(b);
+  });
+}
+
+function pick(btn,t){
+  var it=items[cur],m=$("msg");
+  if(t===it.a){
+    beep(true);btn.classList.add("ok");burst(btn);
+    if(firstTry)score++;
+    $("sc").textContent="⭐ "+score;
+    m.textContent="🎉 정답이에요!";m.className="msg ok";
+    Array.prototype.forEach.call($("opts").children,function(b){b.disabled=true});
+    $("next").classList.remove("hide");
+  }else{
+    beep(false);firstTry=false;
+    btn.classList.add("no");btn.disabled=true;
+    m.textContent="다시 생각해보세요.";m.className="msg no";
+  }
+}
+
+function finish(){
+  show("end");
+  $("bar").style.width="100%";
+  $("final").textContent=score+" / 10점";
+  $("trophy").textContent=score===10?"🏆":score>=7?"🥇":"🌊";
+  $("comment").textContent=score===10?"만점이에요! 독도 박사님이네요!":score>=7?"잘했어요! 조금만 더 하면 만점이에요.":"괜찮아요, 다시 도전하면 더 잘할 수 있어요!";
+  if(score>=7)burst($("final"));
+}
+
+$("go").onclick=start;
+$("retry").onclick=function(){window._retried=true;start()};
+$("next").onclick=function(){cur++;cur>=10?finish():render()};
+</script>
+</body>
+</html>
