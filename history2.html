@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조선왕조 500년 인터랙티브 역사 연표</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Serif KR & Gowun Batang for traditional feel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;600;700;900&family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        joseon: {
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                            goldDark: '#996515',
+                            red: '#8B0000',
+                            crimson: '#C41E3A',
+                            navy: '#0B1D3A',
+                            darkBg: '#120F0D',
+                            hanji: '#F9F6F0',
+                            hanjiDark: '#221F1B',
+                            wood: '#2C1D11',
+                            jade: '#00A86B'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Gowun Batang"', '"Noto Serif KR"', 'serif'],
+                        sans: ['Pretendard', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for traditional feel */
+        ::-webkit-scrollbar {
+            height: 10px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1614;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8b6b23;
+            border-radius: 5px;
+            border: 2px solid #1a1614;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        /* Pattern overlay for traditional paper texturing */
+        .hanji-texture {
+            background-color: #161311;
+            background-image: radial-gradient(#2a221c 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+
+        /* Custom glowing effect for active node */
+        .gold-glow {
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.75), inset 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .gold-glow-text {
+            text-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
+        }
+
+        /* Timeline horizontal track line gradient */
+        .timeline-track-glow {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Dynamic keyframes for subtle pulsing pulse */
+        @keyframes subtlePulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.06); opacity: 1; }
+        }
+        .pulse-active {
+            animation: subtlePulse 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="hanji-texture text-gray-100 font-sans min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-joseon-gold selection:text-black">
+
+    <!-- Header Section -->
+    <header class="border-b-2 border-joseon-goldDark/60 bg-joseon-darkBg/90 backdrop-blur-md sticky top-0 z-30 px-4 py-3 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full border-2 border-joseon-gold bg-joseon-red flex items-center justify-center text-joseon-gold shadow-lg">
+                    <i class="fa-solid font-serif text-xl font-bold">朝</i>
+                </div>
+                <div>
+                    <h1 class="font-serif text-xl md:text-2xl font-bold text-joseon-goldLight tracking-wider flex items-center gap-2">
+                        조선왕조 500년 역사 연표
+                        <span class="text-xs font-sans font-normal px-2 py-0.5 rounded-full bg-joseon-gold/20 text-joseon-gold border border-joseon-gold/40">초·중등 탐구용</span>
+                    </h1>
+                    <p class="text-xs text-gray-400 font-serif">시각적 시간 간격으로 읽는 조선의 10대 핵심 사건</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="openAddEventModal()" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-joseon-goldDark to-joseon-gold text-black font-semibold text-xs md:text-sm hover:brightness-110 transition shadow-md flex items-center gap-1.5 border border-amber-300/40">
+                    <i class="fa-solid fa-plus-circle text-sm"></i>
+                    <span>새 사건 추가</span>
+                </button>
+                <button onclick="resetZoom()" class="px-3 py-1.5 rounded-lg bg-joseon-wood/90 text-gray-300 text-xs hover:bg-joseon-wood border border-joseon-gold/30 transition flex items-center gap-1">
+                    <i class="fa-solid fa-compress"></i>
+                    <span class="hidden sm:inline">전체 보기</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dynamic Content Container (Designed to fit on single viewport height where possible) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 flex flex-col justify-start gap-4">
+
+        <!-- Top Timeline Control & Legend Section -->
+        <div class="bg-joseon-wood/60 border border-joseon-goldDark/40 rounded-xl p-3 flex flex-wrap justify-between items-center text-xs text-gray-300 backdrop-blur-sm gap-2">
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-joseon-gold inline-block shadow"></span>
+                    <span class="font-serif">선택된 사건</span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-joseon-red inline-block border border-joseon-gold/50"></span>
+                    <span class="font-serif">주요 역사 사건</span>
+                </span>
+                <span class="hidden md:flex items-center gap-1 text-gray-400">
+                    <i class="fa-solid fa-arrows-left-right text-joseon-gold"></i>
+                    <span>노드 사이의 거리는 <b>실제 연도 차이(시간 간격)</b>를 나타냅니다</span>
+                </span>
+            </div>
+            <div class="text-xs text-joseon-gold/80 font-serif flex items-center gap-1">
+                <i class="fa-solid fa-hand-pointer animate-bounce"></i> 사건 노드를 클릭하여 상세 설명을 확인하세요
+            </div>
+        </div>
+
+        <!-- Horizontal Scroll Timeline Container -->
+        <section class="relative bg-gradient-to-b from-black/80 via-joseon-wood/40 to-black/80 border-2 border-joseon-goldDark/50 rounded-2xl p-4 sm:p-6 shadow-2xl overflow-hidden">
+            <!-- Decorative Hanok Roof Corner Elements -->
+            <div class="absolute top-2 left-3 text-joseon-gold/20 text-2xl font-serif select-none">卍</div>
+            <div class="absolute top-2 right-3 text-joseon-gold/20 text-2xl font-serif select-none">卍</div>
+
+            <!-- Scrollable Inner Viewport -->
+            <div id="timelineScrollContainer" class="overflow-x-auto overflow-y-hidden py-12 px-8 relative scroll-smooth cursor-grab active:cursor-grabbing">
+                
+                <!-- Main Timeline Container with Dynamic Width -->
+                <div id="timelineTrackContainer" class="relative min-w-max flex items-center h-32 my-4">
+                    
+                    <!-- Continuous Golden Track Line -->
+                    <div id="timelineLine" class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-amber-900 via-joseon-gold to-amber-900 rounded-full timeline-track-glow z-0"></div>
+
+                    <!-- Dynamic Generated Timeline Nodes Will Insert Here -->
+                </div>
+
+            </div>
+            
+            <!-- Timeline Scroll Guidance Arrows -->
+            <button onclick="scrollTimeline(-300)" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 border border-joseon-gold/40 text-joseon-gold flex items-center justify-center hover:bg-joseon-gold hover:text-black transition z-10 shadow-lg">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button onclick="scrollTimeline(300)" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 border border-joseon-gold/40 text-joseon-gold flex items-center justify-center hover:bg-joseon-gold hover:text-black transition z-10 shadow-lg">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </section>
+
+        <!-- Lower Section: Extended Active Event Detailed Display Box ("밑에 따로 설명 추가") -->
+        <section id="extendedDetailSection" class="bg-joseon-hanjiDark/90 border-2 border-joseon-gold/40 rounded-2xl p-5 sm:p-6 shadow-2xl relative transition-all duration-300">
+            <div class="flex flex-col lg:flex-row gap-6 items-start">
+                
+                <!-- Left: Event Key Info Badge & Actions -->
+                <div class="w-full lg:w-1/3 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-joseon-goldDark/30 pb-4 lg:pb-0 lg:pr-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="detailCategory" class="px-2.5 py-1 rounded-md bg-joseon-red/30 border border-joseon-red text-rose-300 text-xs font-semibold">
+                                카테고리
+                            </span>
+                            <span id="detailYearBadge" class="font-serif text-joseon-gold text-lg font-bold">
+                                1392년
+                            </span>
+                        </div>
+                        <h2 id="detailTitle" class="text-2xl sm:text-3xl font-serif font-bold text-joseon-goldLight tracking-wide mb-3">
+                            사건 제목
+                        </h2>
+                        <p id="detailShortDesc" class="text-sm text-amber-100/90 leading-relaxed font-serif bg-black/30 p-3 rounded-lg border border-joseon-gold/20 mb-4">
+                            초등학생 요약 설명이 여기에 표시됩니다.
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons for editing/expanding -->
+                    <div class="flex items-center gap-2 mt-2">
+                        <button onclick="openPopupModal()" class="flex-1 py-2 px-3 rounded-lg bg-joseon-gold/20 hover:bg-joseon-gold/30 border border-joseon-gold/50 text-joseon-goldLight text-xs font-medium transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-window-restore"></i>
+                            <span>팝업으로 크게 보기</span>
+                        </button>
+                        <button onclick="openEditEventModal()" class="py-2 px-3 rounded-lg bg-joseon-wood hover:bg-amber-900/60 border border-amber-700/50 text-gray-300 text-xs font-medium transition flex items-center justify-center gap-1.5" title="설명 수정/추가">
+                            <i class="fa-solid fa-pen-to-square text-joseon-gold"></i>
+                            <span>설명 수정</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Comprehensive Historical Analysis Tabs & Context -->
+                <div class="w-full lg:w-2/3 flex flex-col gap-3">
+                    
+                    <!-- Content Tabs Header -->
+                    <div class="flex border-b border-joseon-goldDark/40 gap-2">
+                        <button onclick="switchTab('fullText')" id="tabBtn-fullText" class="px-4 py-2 font-serif text-sm border-b-2 border-joseon-gold text-joseon-gold font-bold transition">
+                            <i class="fa-solid fa-book-open mr-1.5"></i>상세역사 맥락
+                        </button>
+                        <button onclick="switchTab('figures')" id="tabBtn-figures" class="px-4 py-2 font-serif text-sm text-gray-400 hover:text-joseon-gold transition">
+                            <i class="fa-solid fa-user-ninja mr-1.5"></i>핵심 인물 & 의의
+                        </button>
+                        <button onclick="switchTab('quiz')" id="tabBtn-quiz" class="px-4 py-2 font-serif text-sm text-gray-400 hover:text-joseon-gold transition">
+                            <i class="fa-solid fa-lightbulb mr-1.5"></i>재미있는 상식 & 퀴즈
+                        </button>
+                    </div>
+
+                    <!-- Tab Content Panes -->
+                    <div id="tabContent-fullText" class="tab-pane text-sm text-gray-200 leading-relaxed font-sans space-y-2 py-2">
+                        <div id="detailFullText" class="whitespace-pre-line text-gray-200">
+                            상세설명 내용이 들어갑니다.
+                        </div>
+                    </div>
+
+                    <div id="tabContent-figures" class="tab-pane hidden text-sm text-gray-200 leading-relaxed py-2">
+                        <div class="bg-black/30 rounded-xl p-4 border border-joseon-gold/20 space-y-3">
+                            <div>
+                                <h4 class="font-serif text-joseon-gold font-bold text-sm flex items-center gap-1.5">
+                                    <i class="fa-solid fa-users text-xs"></i> 관련 주요 인물
+                                </h4>
+                                <p id="detailKeyFigures" class="text-xs sm:text-sm text-amber-100/90 mt-1">인물 정보</p>
+                            </div>
+                            <hr class="border-joseon-gold/20">
+                            <div>
+                                <h4 class="font-serif text-joseon-gold font-bold text-sm flex items-center gap-1.5">
+                                    <i class="fa-solid fa-award text-xs"></i> 역사적 의의 & 영향
+                                </h4>
+                                <p id="detailSignificance" class="text-xs sm:text-sm text-amber-100/90 mt-1">역사적 의의</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tabContent-quiz" class="tab-pane hidden text-sm text-gray-200 leading-relaxed py-2">
+                        <div class="bg-joseon-red/10 border border-joseon-red/40 rounded-xl p-4 space-y-2">
+                            <h4 class="font-serif text-rose-300 font-bold text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-circle-question text-rose-400"></i> 이것만은 꼭 기억해요!
+                            </h4>
+                            <p id="detailFunFact" class="text-xs sm:text-sm text-gray-200 italic">
+                                탐구 상식 퀴즈 내용
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-joseon-goldDark/30 py-3 text-center text-xs text-gray-500 font-serif">
+        <p>조선왕조 500년 역사 연표 학습 애플리케이션 &bull; 초등/중등 역사 수업 보조 교재</p>
+    </footer>
+
+
+    <!-- ================= MODALS & POPUPS ================= -->
+
+    <!-- 1. Elementary Kids Friendly Pop-up Modal (노드 클릭시 뜨는 쉬운 팝업) -->
+    <div id="kidsPopupModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gradient-to-b from-joseon-wood via-joseon-hanjiDark to-black border-2 border-joseon-gold rounded-2xl max-w-lg w-full p-6 shadow-2xl relative transform scale-95 transition-transform duration-300">
+            <!-- Roof Top Traditional Ornament -->
+            <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-joseon-red text-joseon-gold px-4 py-1 rounded-full border border-joseon-gold text-xs font-serif font-bold shadow-lg">
+                역사 돋보기 팝업
+            </div>
+            
+            <button onclick="closePopupModal()" class="absolute top-4 right-4 text-gray-400 hover:text-joseon-gold text-xl transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mt-2">
+                <span id="popupYear" class="inline-block px-3 py-1 rounded-full bg-joseon-gold/20 text-joseon-gold text-xs font-bold mb-2 border border-joseon-gold/40">
+                    1392년
+                </span>
+                <h3 id="popupTitle" class="text-2xl font-serif font-bold text-joseon-goldLight mb-4">
+                    조선 건국
+                </h3>
+
+                <!-- Cute Kid-friendly Icon/Illustration -->
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-joseon-red/30 border-2 border-joseon-gold flex items-center justify-center text-joseon-gold text-2xl shadow-inner">
+                    <i id="popupIcon" class="fa-solid fa-crown"></i>
+                </div>
+
+                <div class="bg-black/50 p-4 rounded-xl border border-joseon-gold/30 text-left mb-5">
+                    <h4 class="text-xs font-bold text-joseon-gold mb-1 font-serif"> 쉬운 설명 (초등학생 눈높이)</h4>
+                    <p id="popupKidsDesc" class="text-sm text-gray-100 leading-relaxed font-serif">
+                        쉬운 내용이 들어갑니다.
+                    </p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="closePopupModal()" class="flex-1 py-2.5 rounded-lg bg-joseon-gold text-black font-bold text-sm hover:brightness-110 transition shadow">
+                        확인 완료
+                    </button>
+                    <button onclick="closePopupAndFocusDetail()" class="py-2.5 px-4 rounded-lg bg-joseon-wood border border-joseon-gold/50 text-joseon-goldLight text-xs font-semibold hover:bg-amber-900 transition">
+                        하단 상세설명 보기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. Add New Event Modal (새 사건 추가 기능) -->
+    <div id="addEventModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-joseon-hanjiDark border-2 border-joseon-gold rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeAddEventModal()" class="absolute top-4 right-4 text-gray-400 hover:text-joseon-gold text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 class="text-xl font-serif font-bold text-joseon-gold mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-square-plus"></i> 새 역사 사건 추가
+            </h3>
+            <p class="text-xs text-gray-400 mb-4">추가한 사건은 연도순으로 자동 배치되며 visual 간격이 자동 계산됩니다.</p>
+
+            <form id="addEventForm" onsubmit="handleAddEvent(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">발생 연도 (숫자만)</label>
+                    <input type="number" id="addYear" required min="1300" max="1910" placeholder="예: 1446" 
+                           class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-joseon-gold text-sm focus:outline-none focus:border-joseon-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">사건 제목</label>
+                    <input type="text" id="addTitle" required placeholder="예: 훈민정음 반포" 
+                           class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-sm focus:outline-none focus:border-joseon-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">아이콘 선택</label>
+                    <select id="addIcon" class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-sm focus:outline-none focus:border-joseon-gold">
+                        <option value="fa-crown">👑 왕/건국 (fa-crown)</option>
+                        <option value="fa-book-open">📖 학문/문화 (fa-book-open)</option>
+                        <option value="fa-shield-halved">⚔️ 전쟁/외란 (fa-shield-halved)</option>
+                        <option value="fa-landmark">🏛️ 정치/제도 (fa-landmark)</option>
+                        <option value="fa-hammer">🏗️ 건축/건설 (fa-hammer)</option>
+                        <option value="fa-users">✊ 민중/운동 (fa-users)</option>
+                        <option value="fa-flag">🚩 국호/선포 (fa-flag)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">초등학생용 쉬운 설명 (팝업용)</label>
+                    <textarea id="addShortDesc" required rows="2" placeholder="아이들이 쉽게 이해할 수 있는 한 줄 요약을 적어주세요."
+                              class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-xs focus:outline-none focus:border-joseon-gold"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">상세 역사 설명 (하단 설명판용)</label>
+                    <textarea id="addFullText" required rows="3" placeholder="사건의 배경, 경과 및 결과를 상세히 적어주세요."
+                              class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-xs focus:outline-none focus:border-joseon-gold"></textarea>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeAddEventModal()" class="flex-1 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs hover:bg-gray-700">취소</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-joseon-gold text-black font-bold text-xs hover:brightness-110">사건 등록하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 3. Edit Event Detail Modal (각 사건별 설명 수정/추가 버튼 기능) -->
+    <div id="editEventModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-joseon-hanjiDark border-2 border-joseon-gold rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeEditEventModal()" class="absolute top-4 right-4 text-gray-400 hover:text-joseon-gold text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 class="text-xl font-serif font-bold text-joseon-gold mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square"></i> 사건 설명 보강 및 수정
+            </h3>
+            <p class="text-xs text-gray-400 mb-4">현재 선택된 사건의 설명을 수정하거나 새로운 내용을 보강할 수 있습니다.</p>
+
+            <form id="editEventForm" onsubmit="handleEditEvent(event)" class="space-y-3">
+                <input type="hidden" id="editEventId">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">사건 제목</label>
+                    <input type="text" id="editTitle" required class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">쉬운 팝업 설명 (초등용)</label>
+                    <textarea id="editShortDesc" required rows="2" class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-xs"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">상세 역사 설명</label>
+                    <textarea id="editFullText" required rows="4" class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-xs"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">주요 인물</label>
+                    <input type="text" id="editKeyFigures" class="w-full px-3 py-2 rounded-lg bg-black/60 border border-joseon-gold/40 text-white text-xs">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeEditEventModal()" class="flex-1 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs">취소</button>
+                    <button type="submit" class="flex-1 py-2 rounded-lg bg-joseon-gold text-black font-bold text-xs hover:brightness-110">수정 내용 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // Initial 10 Historical Events Data of Joseon Dynasty
+        let joseonEvents = [
+            {
+                id: 1,
+                year: 1392,
+                title: "조선 건국",
+                category: "건국",
+                icon: "fa-crown",
+                shortDesc: "이성계가 고려를 마감하고 새 나라 '조선'을 세웠어요!",
+                fullText: "1392년 태조 이성계가 신진사대부인 정도전 등과 함께 고려를 뒤로하고 새로운 왕조인 '조선'을 건국했습니다. 수도를 한양(지금의 서울)으로 옮기고 유교를 나라의 근본 이념으로 삼아 500년 역사의 기틀을 마련했습니다.",
+                keyFigures: "태조 이성계, 정도전, 조준",
+                significance: "유교 사상을 바탕으로 한 새로운 국가 체제 수립 및 한양 도읍 완성",
+                funFact: "이성계가 수도로 정한 한양은 배산임수의 명당으로 풍수지리설을 고려해 선택되었답니다!"
+            },
+            {
+                id: 2,
+                year: 1418,
+                title: "세종대왕 즉위",
+                category: "정치",
+                icon: "fa-crown",
+                shortDesc: "조선 최고의 성군이라 불리는 세종대왕이 왕위에 올랐어요!",
+                fullText: "태종의 셋째 아들이었던 충녕대군(세종대왕)이 22세의 나이로 조선 제4대 국왕으로 즉위했습니다. 세종대왕은 집현전을 설치하여 학문과 과학기술, 음악, 국방 등 전 분야에서 황금기를 끌어냈습니다.",
+                keyFigures: "세종대왕, 태종 이방원, 집현전 학자들",
+                significance: "조선 전기 백성을 사랑하는 민본 정치와 문화 르네상스의 시발점",
+                funFact: "세종대왕님은 엄청난 독서가였고, 고기를 매우 좋아하셨다고 해요!"
+            },
+            {
+                id: 3,
+                year: 1443,
+                title: "한글 창제",
+                category: "문화",
+                icon: "fa-book-open",
+                shortDesc: "글을 몰라 슬픈 백성들을 위해 쉽고 아름다운 '훈민정음'을 만들었어요!",
+                fullText: "세종대왕이 어려운 한자를 읽지 못하는 백성들을 불쌍히 여겨 직접 훈민정음(한글) 28자를 창제했습니다. 과학적이고 독창적인 음글자로 1446년에 세상에 널리 반포되었습니다.",
+                keyFigures: "세종대왕, 집현전 학자(신숙주, 성삼문 등)",
+                significance: "세계에서 유일하게 만든 사람과 원리가 밝혀진 과학적 문자 창제",
+                funFact: "한글은 사람의 발음 기관(혀, 입술, 이, 목구멍) 모양을 본떠 만들었어요!"
+            },
+            {
+                id: 4,
+                year: 1592,
+                title: "임진왜란",
+                category: "국방",
+                icon: "fa-shield-halved",
+                shortDesc: "일본이 침략했으나 이순신 장군과 의병들이 나라를 구했어요!",
+                fullText: "도요토미 히데요시가 이끄는 일본군이 조선을 침략하여 7년간 계속된 큰 전쟁입니다. 이순신 장군의 남해 해전 승리와 전국 각지에서 일어난 의병, 권율 장군의 행주대첩 등으로 나라를 지켜냈습니다.",
+                keyFigures: "이순신 장군, 권율 장군, 곽재우 의병장, 선조",
+                significance: "거북선과 승병·의병의 활약으로 국란을 극복했으나 큰 국토 피폐 발생",
+                funFact: "이순신 장군님은 23번 싸워 23번 모두 승리한 23전 23승의 불패 신화를 썼어요!"
+            },
+            {
+                id: 5,
+                year: 1636,
+                title: "병자호란",
+                category: "국방",
+                icon: "fa-shield-cat",
+                shortDesc: "청나라가 침략하여 남한산성에서 힘겨운 항전을 펼쳤어요.",
+                fullText: "청나라 태종이 10만 대군을 이끌고 조선을 침공한 전쟁입니다. 인조 왕과 신하들은 남한산성으로 피신해 47일간 저항했으나 추위와 식량 부족으로 결국 청나라와 평화 협정을 맺게 되었습니다.",
+                keyFigures: "인조, 청 태종, 최명길, 김상헌",
+                significance: "동아시아의 정세 변화(명나라 멸망과 청나라 부상)에 따른 큰 시련",
+                funFact: "남한산성은 경사가 가파르고 튼튼하여 청나라 군대가 끝내 직접 파괴하지 못했답니다."
+            },
+            {
+                id: 6,
+                year: 1724,
+                title: "영조의 탕평책",
+                category: "정치",
+                icon: "fa-landmark",
+                shortDesc: "신하들끼리 편을 갈라 싸우지 못하게 균형을 맞추는 정책을 폈어요!",
+                fullText: "영조대왕이 즉위한 후 당파 싸움(붕당 정치)의 폐단을 막기 위해 어느 한쪽에 쏠리지 않고 고루 인재를 등용하는 '탕평책'을 실시했습니다. 나아가 균역법 실시, 신문고 부활 등 민생 안정을 도모했습니다.",
+                keyFigures: "영조대왕, 박문수",
+                significance: "왕권 강화와 당쟁 완화를 통한 조선 후기 중흥의 토대 마련",
+                funFact: "영조대왕은 탕평채라는 묵 무침 요리를 신하들에게 대접하며 화합을 강조했어요!"
+            },
+            {
+                id: 7,
+                year: 1794,
+                title: "수원 화성 축조",
+                category: "건축",
+                icon: "fa-hammer",
+                shortDesc: "정조대왕이 거중기를 이용해 과학적이고 아름다운 신도시 성곽을 쌓았어요!",
+                fullText: "정조대왕이 아버지 사도세자의 묘를 옮기고 억강부약의 개혁 신도시를 만들기 위해 수원 화성을 쌓기 시작했습니다. 정약용이 발명한 거중기를 사용하여 작업 효율과 안전성을 크게 높였습니다.",
+                keyFigures: "정조대왕, 정약용, 채제공",
+                significance: "동서양의 성곽 축조 기술이 집약된 유네스코 세계문화유산 건축물",
+                funFact: "거중기 덕분에 성을 쌓는 기간과 비용을 절반 이상 단축할 수 있었어요!"
+            },
+            {
+                id: 8,
+                year: 1866,
+                title: "병인양요",
+                category: "외교",
+                icon: "fa-anchor",
+                shortDesc: "프랑스 함대가 강화도를 침략했으나 양헌수 장군 등이 물리쳤어요!",
+                fullText: "흥선대원군의 천주교 탄압을 구실로 프랑스 로즈 제독의 함대가 강화도를 침범한 사건입니다. 정족산성에서 양헌수 장군이 이끄는 조선군이 프랑스군을 퇴각시켰으나 외규장각 도서 등을 약탈당했습니다.",
+                keyFigures: "흥선대원군, 양헌수 장군, 한성근",
+                significance: "서양 세력의 침략에 맞선 척화 의지와 통상 수교 거부 정책 강화",
+                funFact: "당시 빼앗겼던 외규장각 의궤는 2011년 오랜 노력 끝에 한국으로 돌아왔답니다."
+            },
+            {
+                id: 9,
+                year: 1894,
+                title: "동학농민운동",
+                category: "민중",
+                icon: "fa-users",
+                shortDesc: "탐관오리의 수탈에 맞서 농민들이 스스로 일어난 평등 민주 운동이에요!",
+                fullText: "전봉준을 중심으로 한 농민들이 녹두장군 전봉준 아래 집결하여 탐관오리의 비리를 단죄하고 외세의 침략에 저항한 반봉건·반외세 민중 운동입니다. 폐정 개혁안을 제시하며 평등한 사회를 요구했습니다.",
+                keyFigures: "녹두장군 전봉준, 손화중, 김개남",
+                significance: "아래로부터의 신분제 폐지 요구와 갑오개혁의 원동력이 됨",
+                fontFact: "농민군이 부르던 '새야 새야 파랑새야' 노래는 전봉준 장군을 상징하는 전래동요입니다."
+            },
+            {
+                id: 10,
+                year: 1897,
+                title: "대한제국 선포",
+                category: "선포",
+                icon: "fa-flag",
+                shortDesc: "고종 황제가 환구단에서 황제 즉위식을 올리고 자주독립국임을 선포했어요!",
+                fullText: "고종이 아관파천 후 경운궁(덕수궁)으로 환궁하여 환구단에서 황제 즉위식을 올리고 국호를 '대한제국', 연호를 '광무'로 정하여 세계에 자주독립 국가임을 천명했습니다.",
+                keyFigures: "고종 황제, 명성황후",
+                significance: "자주독립국의 위상을 높이고 근대적 광무개혁을 추진함",
+                funFact: "황제를 상징하는 노란색 용포를 고종 황제께서 처음으로 입으셨어요!"
+            }
+        ];
+
+        let selectedEventId = 1;
+        let currentTab = 'fullText';
+
+        // Initialize application on load
+        window.onload = function() {
+            renderTimelineNodes();
+            selectEvent(selectedEventId, false);
+            setupDragScroll();
+        };
+
+        // Render dynamic timeline nodes with proportional pixel distances ("사건 사이 시간 간격 시각화")
+        function renderTimelineNodes() {
+            const trackContainer = document.getElementById('timelineTrackContainer');
+            trackContainer.innerHTML = '<div id="timelineLine" class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-amber-950 via-joseon-gold to-amber-950 rounded-full timeline-track-glow z-0"></div>';
+
+            // Sort events by year chronologically
+            joseonEvents.sort((a, b) => a.year - b.year);
+
+            const minYear = 1392;
+            const maxYear = 1897;
+            const totalSpan = maxYear - minYear; // 505 years
+            
+            // Base track scale pixel width
+            const totalPixelWidth = 1400; 
+
+            joseonEvents.forEach((event, index) => {
+                // Calculate position percentage based on year span
+                const relativeYear = event.year - minYear;
+                let leftOffsetPx = (relativeYear / totalSpan) * totalPixelWidth + 60; // Offset 60px start
+
+                // Adjust tight overlaps if years are too close
+                if (index > 0) {
+                    const prevNode = joseonEvents[index - 1];
+                    const prevYearDiff = event.year - prevNode.year;
+                    // If year diff is under 10 years, enforce minimum visual distance so nodes don't collide
+                    if (prevYearDiff < 10) {
+                        leftOffsetPx += 25;
+                    }
+                }
+
+                // Node Element Container
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = `absolute top-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer transition-all duration-300 z-10 group`;
+                nodeDiv.style.left = `${leftOffsetPx}px`;
+                nodeDiv.id = `node-${event.id}`;
+                nodeDiv.onclick = () => selectEvent(event.id, true);
+
+                const isActive = event.id === selectedEventId;
+
+                nodeDiv.innerHTML = `
+                    <!-- Year Badge (Top) -->
+                    <div class="mb-2 px-2.5 py-0.5 rounded-full text-xs font-serif font-bold transition-transform duration-300 ${
+                        isActive 
+                        ? 'bg-joseon-gold text-black scale-110 shadow-lg gold-glow-text' 
+                        : 'bg-black/80 text-joseon-gold border border-joseon-gold/40 group-hover:scale-105'
+                    }">
+                        ${event.year}년
+                    </div>
+
+                    <!-- Glowing Circle Node -->
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${
+                        isActive 
+                        ? 'bg-joseon-gold text-black border-amber-200 gold-glow scale-125 pulse-active' 
+                        : 'bg-joseon-wood/90 text-joseon-gold border-joseon-gold/60 group-hover:border-joseon-gold group-hover:scale-110 shadow-md'
+                    }">
+                        <i class="fa-solid ${event.icon || 'fa-landmark'} text-base sm:text-lg"></i>
+                    </div>
+
+                    <!-- Event Title Label (Bottom) -->
+                    <div class="mt-2 text-center whitespace-nowrap">
+                        <span class="block font-serif text-xs sm:text-sm font-bold tracking-tight transition-colors duration-200 ${
+                            isActive ? 'text-joseon-goldLight gold-glow-text underline underline-offset-4' : 'text-gray-300 group-hover:text-joseon-gold'
+                        }">
+                            ${event.title}
+                        </span>
+                    </div>
+                `;
+
+                trackContainer.appendChild(nodeDiv);
+            });
+
+            // Adjust overall track width dynamically
+            const lastNodePos = ((joseonEvents[joseonEvents.length - 1].year - minYear) / totalSpan) * totalPixelWidth + 160;
+            trackContainer.style.width = `${Math.max(lastNodePos, 1000)}px`;
+        }
+
+        // Select an event and update both Popup & Extended Detailed Panel below
+        function selectEvent(id, autoScroll = true) {
+            selectedEventId = id;
+            const eventData = joseonEvents.find(e => e.id === id);
+            if (!eventData) return;
+
+            // Update Timeline Node styles
+            renderTimelineNodes();
+
+            // Auto-scroll timeline to center the selected node smoothly
+            if (autoScroll) {
+                const nodeElem = document.getElementById(`node-${id}`);
+                const scrollContainer = document.getElementById('timelineScrollContainer');
+                if (nodeElem && scrollContainer) {
+                    const nodeOffset = nodeElem.offsetLeft;
+                    const containerWidth = scrollContainer.clientWidth;
+                    scrollContainer.scrollTo({
+                        left: nodeOffset - (containerWidth / 2) + 40,
+                        behavior: 'smooth'
+                    });
+                }
+
+                // Trigger Kid Pop-up Modal
+                openPopupModal();
+            }
+
+            // Update Extended Detail Section (Bottom Panel)
+            document.getElementById('detailCategory').innerText = eventData.category || "역사사건";
+            document.getElementById('detailYearBadge').innerText = `${eventData.year}년`;
+            document.getElementById('detailTitle').innerText = eventData.title;
+            document.getElementById('detailShortDesc').innerText = `💡 ${eventData.shortDesc}`;
+            
+            document.getElementById('detailFullText').innerText = eventData.fullText;
+            document.getElementById('detailKeyFigures').innerText = eventData.keyFigures || "관련 인물 기록 정보 있음";
+            document.getElementById('detailSignificance').innerText = eventData.significance || "조선 시대사적 중요한 분기점";
+            document.getElementById('detailFunFact').innerText = eventData.funFact || "이 사건은 당시 민중과 조정에 큰 영향을 미쳤습니다.";
+        }
+
+        // Horizontal Scroll Buttons
+        function scrollTimeline(amount) {
+            const container = document.getElementById('timelineScrollContainer');
+            container.scrollBy({ left: amount, behavior: 'smooth' });
+        }
+
+        // Mouse Drag to Scroll Timeline functionality
+        function setupDragScroll() {
+            const slider = document.getElementById('timelineScrollContainer');
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => { isDown = false; });
+            slider.addEventListener('mouseup', () => { isDown = false; });
+            slider.addEventListener('mousemove', (e) => {
+                if(!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // Tab Switching for Lower Detailed Panel
+        function switchTab(tabName) {
+            currentTab = tabName;
+            ['fullText', 'figures', 'quiz'].forEach(t => {
+                const pane = document.getElementById(`tabContent-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (t === tabName) {
+                    pane.classList.remove('hidden');
+                    btn.className = "px-4 py-2 font-serif text-sm border-b-2 border-joseon-gold text-joseon-gold font-bold transition";
+                } else {
+                    pane.classList.add('hidden');
+                    btn.className = "px-4 py-2 font-serif text-sm text-gray-400 hover:text-joseon-gold transition";
+                }
+            });
+        }
+
+        // --- Modals Logic ---
+
+        // 1. Kids Pop-up Modal Controls
+        function openPopupModal() {
+            const eventData = joseonEvents.find(e => e.id === selectedEventId);
+            if (!eventData) return;
+
+            document.getElementById('popupYear').innerText = `${eventData.year}년`;
+            document.getElementById('popupTitle').innerText = eventData.title;
+            document.getElementById('popupKidsDesc').innerText = eventData.shortDesc;
+            
+            const iconElem = document.getElementById('popupIcon');
+            iconElem.className = `fa-solid ${eventData.icon || 'fa-crown'}`;
+
+            const modal = document.getElementById('kidsPopupModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+                modal.firstElementChild.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closePopupModal() {
+            const modal = document.getElementById('kidsPopupModal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.remove('scale-100');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 250);
+        }
+
+        function closePopupAndFocusDetail() {
+            closePopupModal();
+            const detailSection = document.getElementById('extendedDetailSection');
+            detailSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 2. Add Event Modal Controls
+        function openAddEventModal() {
+            document.getElementById('addEventModal').classList.remove('hidden');
+        }
+
+        function closeAddEventModal() {
+            document.getElementById('addEventModal').classList.add('hidden');
+            document.getElementById('addEventForm').reset();
+        }
+
+        function handleAddEvent(e) {
+            e.preventDefault();
+            const year = parseInt(document.getElementById('addYear').value);
+            const title = document.getElementById('addTitle').value;
+            const icon = document.getElementById('addIcon').value;
+            const shortDesc = document.getElementById('addShortDesc').value;
+            const fullText = document.getElementById('addFullText').value;
+
+            const newId = Date.now();
+            const newEvent = {
+                id: newId,
+                year,
+                title,
+                category: "사용자 추가",
+                icon,
+                shortDesc,
+                fullText,
+                keyFigures: "사용자 입력 내용",
+                significance: "사용자가 추가한 중요한 역사적 사건",
+                funFact: "이 사건은 사용자가 직접 등록한 맞춤 사건입니다."
+            };
+
+            joseonEvents.push(newEvent);
+            closeAddEventModal();
+            selectEvent(newId, true);
+        }
+
+        // 3. Edit Event Modal Controls
+        function openEditEventModal() {
+            const eventData = joseonEvents.find(e => e.id === selectedEventId);
+            if (!eventData) return;
+
+            document.getElementById('editEventId').value = eventData.id;
+            document.getElementById('editTitle').value = eventData.title;
+            document.getElementById('editShortDesc').value = eventData.shortDesc;
+            document.getElementById('editFullText').value = eventData.fullText;
+            document.getElementById('editKeyFigures').value = eventData.keyFigures || "";
+
+            document.getElementById('editEventModal').classList.remove('hidden');
+        }
+
+        function closeEditEventModal() {
+            document.getElementById('editEventModal').classList.add('hidden');
+        }
+
+        function handleEditEvent(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editEventId').value);
+            const eventData = joseonEvents.find(e => e.id === id);
+
+            if (eventData) {
+                eventData.title = document.getElementById('editTitle').value;
+                eventData.shortDesc = document.getElementById('editShortDesc').value;
+                eventData.fullText = document.getElementById('editFullText').value;
+                eventData.keyFigures = document.getElementById('editKeyFigures').value;
+
+                closeEditEventModal();
+                selectEvent(id, false);
+            }
+        }
+
+        function resetZoom() {
+            const container = document.getElementById('timelineScrollContainer');
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
