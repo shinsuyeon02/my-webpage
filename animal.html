@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알록달록 동물 짝맞추기 게임</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Gothic A1 / Gaegu for playful look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gothic+A1:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            pink: '#FF8EAF',
+                            yellow: '#FFE169',
+                            blue: '#4CC9F0',
+                            purple: '#B5179E',
+                            green: '#70E000',
+                            bg: '#FFF8F0'
+                        }
+                    },
+                    fontFamily: {
+                        gaegu: ['Gaegu', 'cursive'],
+                        sans: ['Gothic A1', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FFF8F0;
+            background-image: radial-gradient(#FFD1DC 1.5px, transparent 1.5px), radial-gradient(#D0F4DE 1.5px, #FFF8F0 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            font-family: 'Gothic A1', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation; /* 모바일 연속 터치 시 줌 방지 */
+        }
+
+        /* 3D Card Flip Styling */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1rem;
+        }
+
+        /* Back side (hidden state) */
+        .card-back {
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            border: 3px solid #FFFFFF;
+            box-shadow: 0 4px 10px rgba(255, 154, 158, 0.3);
+        }
+
+        /* Front side (revealed state) */
+        .card-front {
+            background: #FFFFFF;
+            transform: rotateY(180deg);
+            border: 3px solid #FFE169;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Card Match Pulse Animation */
+        @keyframes matchedPulse {
+            0% { transform: scale(1) rotateY(180deg); }
+            50% { transform: scale(1.08) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(180deg); }
+        }
+
+        .card.matched .card-inner {
+            animation: matchedPulse 0.4s ease-in-out;
+        }
+
+        .card.matched .card-front {
+            border-color: #70E000;
+            background-color: #F0FFF0;
+        }
+
+        .btn-bounce {
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-bounce:active {
+            transform: scale(0.92);
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 text-gray-800 overflow-hidden">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl flex justify-between items-center bg-white/80 backdrop-blur-md px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-sm border border-white shrink-0">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl sm:text-3xl animate-bounce">🦁</span>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-extrabold font-gaegu text-pink-500 tracking-wide leading-none">
+                    동물 짝맞추기
+                </h1>
+                <p class="hidden sm:block text-[11px] text-gray-500 font-medium">같은 그림의 동물 카드를 찾아보세요!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="sound-btn" class="btn-bounce bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-bold p-2 sm:px-3 sm:py-2 rounded-xl border border-yellow-300 flex items-center justify-center text-sm" title="소리 On/Off">
+                <i id="sound-icon" class="fas fa-volume-up text-base sm:text-lg"></i>
+            </button>
+            <button id="restart-btn" class="btn-bounce bg-pink-500 hover:bg-pink-600 text-white font-bold px-3 py-2 rounded-xl shadow-sm border-b-2 border-pink-700 text-xs sm:text-sm flex items-center gap-1.5">
+                <i class="fas fa-rotate-right"></i>
+                <span>다시 시작</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="w-full max-w-4xl flex flex-col items-center gap-2 flex-1 min-h-0 py-2">
+
+        <!-- Controls & Dashboard -->
+        <div class="w-full bg-white/90 rounded-xl p-2 sm:p-3 shadow-sm border border-orange-100 flex flex-wrap justify-between items-center gap-2 shrink-0">
+            
+            <!-- Difficulty Selector -->
+            <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-gray-600 hidden xs:inline"><i class="fas fa-layer-group text-pink-400 mr-1"></i>난이도:</span>
+                <div class="inline-flex rounded-lg bg-orange-50 p-0.5 border border-orange-200">
+                    <button class="diff-btn px-2.5 py-1 rounded-md text-xs font-bold transition-all text-gray-600" data-diff="easy">쉬움 (8장)</button>
+                    <button class="diff-btn px-2.5 py-1 rounded-md text-xs font-bold transition-all bg-pink-500 text-white shadow-sm" data-diff="normal">보통 (12장)</button>
+                    <button class="diff-btn px-2.5 py-1 rounded-md text-xs font-bold transition-all text-gray-600" data-diff="hard">어려움 (16장)</button>
+                </div>
+            </div>
+
+            <!-- Scoreboard -->
+            <div class="flex items-center gap-2 sm:gap-3 text-xs font-bold">
+                <div class="bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                    <i class="fas fa-star text-yellow-400"></i>
+                    <span>점수: <span id="score-val" class="text-blue-900 text-sm">0</span></span>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 text-purple-700 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                    <i class="fas fa-clock text-purple-400"></i>
+                    <span>시간: <span id="timer-val" class="text-purple-900 text-sm">0초</span></span>
+                </div>
+                <div class="bg-green-50 border border-green-200 text-green-700 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                    <i class="fas fa-trophy text-amber-500"></i>
+                    <span>최고: <span id="best-val" class="text-green-900 text-sm">-</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Grid Container (Scroll-free responsive wrapper) -->
+        <div class="w-full flex-1 min-h-0 flex items-center justify-center">
+            <div id="game-board" class="w-full h-full max-h-[75vh] grid gap-2 sm:gap-3 p-1 transition-all duration-300">
+                <!-- Cards generated dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center text-[10px] sm:text-xs text-gray-400 font-medium py-1 shrink-0">
+        <p>💡 어린이 집중력 & 기어력 향상 2D 웹 게임 교구</p>
+    </footer>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        <div class="bg-white rounded-3xl p-5 sm:p-7 max-w-xs sm:max-w-sm w-full text-center shadow-2xl border-4 border-yellow-300 transform scale-90 transition-transform duration-300" id="modal-card">
+            <div class="text-5xl mb-1 animate-bounce">🎉</div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold font-gaegu text-pink-500 mb-1">참 잘했어요!</h2>
+            <p class="text-gray-500 text-xs mb-4">모든 동물 짝을 성공적으로 찾았습니다!</p>
+            
+            <div class="bg-yellow-50 rounded-xl p-3 mb-5 border border-yellow-200 space-y-1.5 text-left text-xs sm:text-sm">
+                <div class="flex justify-between items-center text-gray-700 font-bold">
+                    <span><i class="fas fa-star text-yellow-500 mr-1.5"></i>획득 점수:</span>
+                    <span id="modal-score" class="text-base text-blue-600">0점</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-700 font-bold">
+                    <span><i class="fas fa-stopwatch text-purple-400 mr-1.5"></i>소요 시간:</span>
+                    <span id="modal-time" class="text-base text-purple-600">0초</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-700 font-bold">
+                    <span><i class="fas fa-bullseye text-pink-400 mr-1.5"></i>시도 횟수:</span>
+                    <span id="modal-tries" class="text-base text-pink-600">0회</span>
+                </div>
+            </div>
+
+            <button id="modal-restart-btn" class="btn-bounce w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-base py-2.5 rounded-xl shadow-md border-b-4 border-green-700 flex items-center justify-center gap-2">
+                <i class="fas fa-play"></i> 다시 도전하기
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        /* ... existing SoundEffects logic ... */
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playFlip() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playMatch() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const playNote = (freq, time, duration) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, time);
+
+                    gain.gain.setValueAtTime(0.25, time);
+                    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(time);
+                    osc.stop(time + duration);
+                };
+                playNote(523.25, now, 0.18);
+                playNote(659.25, now + 0.09, 0.25);
+                playNote(783.99, now + 0.18, 0.35);
+            }
+
+            playMismatch() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+
+            playVictory() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [
+                    { f: 523.25, t: 0 },
+                    { f: 659.25, t: 0.1 },
+                    { f: 783.99, t: 0.2 },
+                    { f: 1046.50, t: 0.3 }
+                ];
+                notes.forEach(note => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(note.f, now + note.t);
+
+                    gain.gain.setValueAtTime(0.25, now + note.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + note.t);
+                    osc.stop(now + note.t + 0.35);
+                });
+            }
+        }
+
+        const sound = new SoundEffects();
+
+        const ALL_ANIMALS = [
+            { id: 'lion', emoji: '🦁', name: '사자' },
+            { id: 'rabbit', emoji: '🐰', name: '토끼' },
+            { id: 'bear', emoji: '🐻', name: '곰' },
+            { id: 'fox', emoji: '🦊', name: '여우' },
+            { id: 'elephant', emoji: '🐘', name: '코끼리' },
+            { id: 'panda', emoji: '🐼', name: '판다' },
+            { id: 'tiger', emoji: '🐯', name: '호랑이' },
+            { id: 'monkey', emoji: '🐵', name: '원숭이' },
+            { id: 'frog', emoji: '🐸', name: '개구리' },
+            { id: 'unicorn', emoji: '🦄', name: '유니콘' },
+            { id: 'pig', emoji: '🐷', name: '돼지' },
+            { id: 'koala', emoji: '🐨', name: '코알라' }
+        ];
+
+        // Mobile Friendly Responsive Layout Grid Configs
+        const DIFFICULTY_CONFIG = {
+            easy: { pairs: 4, cols: 'grid-cols-4 grid-rows-2', textEmoji: 'text-3xl sm:text-4xl' },
+            normal: { pairs: 6, cols: 'grid-cols-4 grid-rows-3', textEmoji: 'text-2xl sm:text-3xl' },
+            hard: { pairs: 8, cols: 'grid-cols-4 grid-rows-4', textEmoji: 'text-xl sm:text-2xl' }
+        };
+
+        let currentDiff = 'normal';
+        let cardsData = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let score = 0;
+        let tries = 0;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let isBoardLocked = false;
+
+        // DOM Elements
+        const gameBoard = document.getElementById('game-board');
+        const scoreVal = document.getElementById('score-val');
+        const timerVal = document.getElementById('timer-val');
+        const bestVal = document.getElementById('best-val');
+        const restartBtn = document.getElementById('restart-btn');
+        const soundBtn = document.getElementById('sound-btn');
+        const soundIcon = document.getElementById('sound-icon');
+        const diffBtns = document.querySelectorAll('.diff-btn');
+        
+        const victoryModal = document.getElementById('victory-modal');
+        const modalCard = document.getElementById('modal-card');
+        const modalScore = document.getElementById('modal-score');
+        const modalTime = document.getElementById('modal-time');
+        const modalTries = document.getElementById('modal-tries');
+        const modalRestartBtn = document.getElementById('modal-restart-btn');
+
+        // Confetti Canvas Logic
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const ctx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+        let animationFrameId = null;
+
+        function resizeCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * confettiCanvas.width;
+                this.y = Math.random() * confettiCanvas.height - confettiCanvas.height;
+                this.size = Math.random() * 8 + 5;
+                this.color = ['#FF8EAF', '#FFE169', '#4CC9F0', '#B5179E', '#70E000', '#FF9A9E'][Math.floor(Math.random() * 6)];
+                this.vy = Math.random() * 3 + 2;
+                this.vx = Math.random() * 2 - 1;
+                this.rotation = Math.random() * 360;
+                this.rotSpeed = Math.random() * 10 - 5;
+            }
+            update() {
+                this.y += this.vy;
+                this.x += this.vx;
+                this.rotation += this.rotSpeed;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function triggerConfetti() {
+            confettiParticles = Array.from({ length: 90 }, () => new Particle());
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            function loop() {
+                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                confettiParticles.forEach((p, idx) => {
+                    p.update();
+                    p.draw();
+                    if (p.y > confettiCanvas.height) {
+                        confettiParticles[idx] = new Particle();
+                    }
+                });
+                animationFrameId = requestAnimationFrame(loop);
+            }
+            loop();
+            setTimeout(() => {
+                cancelAnimationFrame(animationFrameId);
+                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            }, 4000);
+        }
+
+        // Start / Reset Timer
+        function startTimer() {
+            stopTimer();
+            timerSeconds = 0;
+            timerVal.textContent = '0초';
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                timerVal.textContent = `${timerSeconds}초`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // LocalStorage Best Score Helper
+        function updateBestScoreDisplay() {
+            const best = localStorage.getItem(`matching_game_best_${currentDiff}`);
+            if (best) {
+                bestVal.textContent = `${best}점`;
+            } else {
+                bestVal.textContent = '-';
+            }
+        }
+
+        function saveBestScore() {
+            const key = `matching_game_best_${currentDiff}`;
+            const currentBest = parseInt(localStorage.getItem(key) || '0', 10);
+            if (score > currentBest) {
+                localStorage.setItem(key, score.toString());
+                updateBestScoreDisplay();
+            }
+        }
+
+        function initGame() {
+            stopTimer();
+            const config = DIFFICULTY_CONFIG[currentDiff];
+            const selectedAnimals = ALL_ANIMALS.slice(0, config.pairs);
+            const deck = [...selectedAnimals, ...selectedAnimals];
+            
+            cardsData = shuffle(deck).map((animal, index) => ({
+                uid: index,
+                id: animal.id,
+                emoji: animal.emoji,
+                name: animal.name,
+                isFlipped: false,
+                isMatched: false
+            }));
+
+            flippedCards = [];
+            matchedPairs = 0;
+            score = 0;
+            tries = 0;
+            isBoardLocked = false;
+
+            updateBestScoreDisplay();
+            updateDashboard();
+            renderBoard();
+            hideVictoryModal();
+            startTimer();
+        }
+
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function renderBoard() {
+            const config = DIFFICULTY_CONFIG[currentDiff];
+            gameBoard.className = `w-full h-full max-h-[75vh] grid ${config.cols} gap-2 sm:gap-3 p-1 transition-all duration-300 items-stretch`;
+            gameBoard.innerHTML = '';
+
+            cardsData.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `card perspective-1000 w-full h-full cursor-pointer select-none touch-manipulation`;
+                cardEl.dataset.index = index;
+
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back flex flex-col items-center justify-center">
+                            <i class="fas fa-paw text-white/60 text-lg sm:text-2xl"></i>
+                        </div>
+                        <div class="card-front flex flex-col items-center justify-center p-1">
+                            <span class="${config.textEmoji} leading-none transform transition-transform">${card.emoji}</span>
+                            <span class="text-[10px] sm:text-xs font-bold text-gray-600 mt-1">${card.name}</span>
+                        </div>
+                    </div>
+                `;
+
+                cardEl.addEventListener('click', () => handleCardClick(index));
+                gameBoard.appendChild(cardEl);
+            });
+        }
+
+        function handleCardClick(index) {
+            if (isBoardLocked) return;
+
+            const card = cardsData[index];
+            const cardEl = gameBoard.children[index];
+
+            if (card.isFlipped || card.isMatched) return;
+
+            sound.playFlip();
+
+            card.isFlipped = true;
+            cardEl.classList.add('flipped');
+            flippedCards.push({ card, index, el: cardEl });
+
+            if (flippedCards.length === 2) {
+                tries++;
+                updateDashboard();
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            isBoardLocked = true;
+            const [first, second] = flippedCards;
+
+            if (first.card.id === second.card.id) {
+                setTimeout(() => {
+                    sound.playMatch();
+
+                    first.card.isMatched = true;
+                    second.card.isMatched = true;
+
+                    first.el.classList.add('matched');
+                    second.el.classList.add('matched');
+
+                    // Base score + time bonus
+                    score += Math.max(10, 20 - Math.floor(timerSeconds / 5));
+                    matchedPairs++;
+                    flippedCards = [];
+                    isBoardLocked = false;
+
+                    updateDashboard();
+
+                    const config = DIFFICULTY_CONFIG[currentDiff];
+                    if (matchedPairs === config.pairs) {
+                        setTimeout(handleVictory, 400);
+                    }
+                }, 350);
+            } else {
+                setTimeout(() => {
+                    sound.playMismatch();
+
+                    first.card.isFlipped = false;
+                    second.card.isFlipped = false;
+
+                    first.el.classList.remove('flipped');
+                    second.el.classList.remove('flipped');
+
+                    flippedCards = [];
+                    isBoardLocked = false;
+                }, 900);
+            }
+        }
+
+        function updateDashboard() {
+            scoreVal.textContent = score;
+        }
+
+        function handleVictory() {
+            stopTimer();
+            sound.playVictory();
+            saveBestScore();
+            triggerConfetti();
+
+            modalScore.textContent = `${score}점`;
+            modalTime.textContent = `${timerSeconds}초`;
+            modalTries.textContent = `${tries}회`;
+
+            victoryModal.classList.remove('opacity-0', 'pointer-events-none');
+            modalCard.classList.remove('scale-90');
+            modalCard.classList.add('scale-100');
+        }
+
+        function hideVictoryModal() {
+            victoryModal.classList.add('opacity-0', 'pointer-events-none');
+            modalCard.classList.remove('scale-100');
+            modalCard.classList.add('scale-90');
+        }
+
+        restartBtn.addEventListener('click', () => {
+            sound.playFlip();
+            initGame();
+        });
+
+        modalRestartBtn.addEventListener('click', () => {
+            sound.playFlip();
+            initGame();
+        });
+
+        soundBtn.addEventListener('click', () => {
+            sound.enabled = !sound.enabled;
+            if (sound.enabled) {
+                soundIcon.className = 'fas fa-volume-up text-base sm:text-lg text-yellow-700';
+                soundBtn.classList.remove('bg-gray-200', 'border-gray-300');
+                soundBtn.classList.add('bg-yellow-100', 'border-yellow-300');
+                sound.playFlip();
+            } else {
+                soundIcon.className = 'fas fa-volume-mute text-base sm:text-lg text-gray-500';
+                soundBtn.classList.remove('bg-yellow-100', 'border-yellow-300');
+                soundBtn.classList.add('bg-gray-200', 'border-gray-300');
+            }
+        });
+
+        diffBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const diff = e.target.dataset.diff;
+                if (currentDiff === diff) return;
+
+                diffBtns.forEach(b => {
+                    b.classList.remove('bg-pink-500', 'text-white', 'shadow-sm');
+                    b.classList.add('text-gray-600');
+                });
+                e.target.classList.add('bg-pink-500', 'text-white', 'shadow-sm');
+                e.target.classList.remove('text-gray-600');
+
+                currentDiff = diff;
+                sound.playFlip();
+                initGame();
+            });
+        });
+
+        window.onload = () => {
+            initGame();
+        };
+    </script>
+</body>
+</html>
