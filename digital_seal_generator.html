@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>스마트 전자도장 메이커 - 공문서용 투명 도장 생성기</title>
+    <title>스마트 전자도장 & 서명 메이커 - 공문서용 투명 도장/사인 생성기</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -68,8 +68,8 @@
                     <i class="fa-solid fa-stamp"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight">스마트 전자도장 메이커</h1>
-                    <p class="text-[11px] sm:text-xs text-slate-500">교사 및 사무직을 위한 투명 도장 생성기</p>
+                    <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight">스마트 전자도장 & 서명 메이커</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-500">교사 및 사무직을 위한 투명 도장/사인 생성기</p>
                 </div>
             </div>
             
@@ -86,6 +86,20 @@
         </div>
     </header>
 
+    <!-- Main Navigation Mode Switcher Tabs -->
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        <div class="bg-slate-200/80 p-1 rounded-2xl flex max-w-md mx-auto sm:mx-0 shadow-inner">
+            <button id="tabStamp" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white text-red-600 shadow-sm">
+                <i class="fa-solid fa-stamp"></i>
+                <span>도장 생성기</span>
+            </button>
+            <button id="tabSign" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                <i class="fa-solid fa-signature"></i>
+                <span>커스텀 서명/사인</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Main Content Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
@@ -97,7 +111,7 @@
                 <!-- Preview Canvas Header Controls -->
                 <div class="w-full flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
                     <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">실시간 미리보기</span>
+                        <span id="previewTitle" class="text-xs font-bold text-slate-700 uppercase tracking-wider">전자도장 미리보기</span>
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>배경 투명
                         </span>
@@ -115,8 +129,8 @@
                 </div>
 
                 <!-- Canvas Display Container -->
-                <div id="canvasContainer" class="checkerboard-bg rounded-2xl p-6 sm:p-10 border border-slate-200/80 shadow-inner flex items-center justify-center transition-all duration-300 my-auto w-full max-w-[380px] sm:max-w-[440px] aspect-square">
-                    <canvas id="stampCanvas" width="600" height="600" class="w-full h-full drop-shadow-sm cursor-pointer touch-manipulation hover:scale-[1.02] transition-transform" title="클릭하여 이미지 다운로드"></canvas>
+                <div id="canvasContainer" class="checkerboard-bg rounded-2xl p-4 sm:p-8 border border-slate-200/80 shadow-inner flex items-center justify-center transition-all duration-300 my-auto w-full max-w-[380px] sm:max-w-[440px] aspect-square relative touch-none select-none">
+                    <canvas id="stampCanvas" width="600" height="600" class="w-full h-full drop-shadow-sm cursor-crosshair touch-none" title="도장/사인 영역"></canvas>
                 </div>
 
                 <!-- Canvas Actions & Resolution Meta -->
@@ -133,7 +147,7 @@
                         </button>
                         <button id="downloadBtn" class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold px-5 py-2 rounded-xl shadow-md shadow-red-200 transition-all flex-1 sm:flex-none flex items-center justify-center gap-2">
                             <i class="fa-solid fa-file-arrow-down"></i>
-                            <span>투명 도장 다운로드</span>
+                            <span id="downloadBtnText">투명 도장 다운로드</span>
                         </button>
                     </div>
                 </div>
@@ -146,15 +160,15 @@
                 <div class="space-y-1">
                     <p class="font-bold text-amber-950">공문서 및 한글(HWP) 삽입 팁</p>
                     <p class="text-amber-800 leading-relaxed text-xs">
-                        다운로드한 도장(PNG)은 <strong>배경이 투명</strong>합니다. 한글(HWP) 문서나 MS 워드에서 이미지를 넣은 후, 개체 속성을 <code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono font-semibold text-amber-900">글 뒤로</code> 또는 <code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono font-semibold text-amber-900">본문과의 배치: 글과 겹침</code>으로 설정하면 서류의 성명 위에 도장이 찍힌 것처럼 연출됩니다.
+                        다운로드한 파일(PNG)은 <strong>배경이 투명</strong>합니다. 한글(HWP) 문서나 MS 워드에서 이미지를 넣은 후, 개체 속성을 <code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono font-semibold text-amber-900">글 뒤로</code> 또는 <code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono font-semibold text-amber-900">본문과의 배치: 글과 겹침</code>으로 설정하면 서류의 성명 위에 찍힌 것처럼 연출됩니다.
                     </p>
                 </div>
             </div>
 
         </div>
 
-        <!-- Controls Form Panel (Left on Desktop) -->
-        <div class="lg:col-span-6 xl:col-span-5 lg:order-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
+        <!-- Mode 1 Panel: Stamp Generator Controls -->
+        <div id="stampControlsPanel" class="lg:col-span-6 xl:col-span-5 lg:order-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
             
             <!-- Section 1: Name Input & Suffix Options -->
             <div>
@@ -339,6 +353,140 @@
 
         </div>
 
+        <!-- Mode 2 Panel: Custom Signature Controls (Hidden by Default) -->
+        <div id="signControlsPanel" class="lg:col-span-6 xl:col-span-5 lg:order-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6 hidden">
+            
+            <!-- Signature Creation Method Selection (Hand Draw vs Auto Text Script) -->
+            <div>
+                <label class="block text-sm font-bold text-slate-900 mb-2">
+                    <i class="fa-solid fa-signature text-red-500 mr-1.5"></i>서명 방식 선택
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="signModeDrawBtn" class="py-2.5 px-3 border-2 border-red-600 bg-red-50/50 rounded-xl text-xs font-bold text-red-600 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-hand-pointer"></i>직접 손으로 그리거나 쓰기
+                    </button>
+                    <button type="button" id="signModeTextBtn" class="py-2.5 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-keyboard"></i>이름 입력 후 필기체 자동생성
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sub Panel A: Hand-Draw Drawing Tools -->
+            <div id="handDrawSubPanel" class="space-y-4">
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700">드로잉 도구 & 지우개</span>
+                    <div class="flex items-center space-x-1">
+                        <button id="undoSignBtn" class="px-2.5 py-1 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40" title="실행 취소">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>되돌리기
+                        </button>
+                        <button id="clearSignBtn" class="px-2.5 py-1 border border-red-200 text-red-600 bg-red-50/60 rounded-lg text-xs font-medium hover:bg-red-100" title="전체 지우기">
+                            <i class="fa-solid fa-trash-can mr-1"></i>전체 지우기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pen Mode vs Eraser Mode Buttons -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="penToolBtn" class="py-2 px-3 border border-red-600 bg-red-50 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-nib"></i>펜 (그리기 모드)
+                    </button>
+                    <button type="button" id="eraserToolBtn" class="py-2 px-3 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50">
+                        <i class="fa-solid fa-eraser"></i>지우개 모드
+                    </button>
+                </div>
+
+                <!-- Pen Size Slider -->
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                        <span>펜 / 지우개 굵기</span>
+                        <span id="penWidthVal" class="text-slate-500 font-mono">10px</span>
+                    </div>
+                    <input type="range" id="penWidth" min="2" max="36" value="10" class="w-full accent-red-600 cursor-pointer">
+                </div>
+
+                <div class="p-3 bg-red-50/60 border border-red-100 rounded-xl text-xs text-red-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-red-500"></i>
+                    <span>우측 미리보기 화면 위에서 <strong>마우스나 터치펜/손가락</strong>으로 서명을 그리세요.</span>
+                </div>
+            </div>
+
+            <!-- Sub Panel B: Auto Text Script Generator -->
+            <div id="autoTextSubPanel" class="space-y-4 hidden">
+                <div>
+                    <label for="signTextInput" class="block text-xs font-bold text-slate-700 mb-1">서명 성명/영문 사인 텍스트</label>
+                    <input type="text" id="signTextInput" value="홍길동" maxlength="15"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 font-bold text-sm"
+                           placeholder="성명 또는 서명 텍스트 (예: 홍길동 / Gildong)">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">필기체 폰트 스타일</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="p-2 border border-slate-200 rounded-xl cursor-pointer hover:border-red-300 flex items-center gap-2">
+                            <input type="radio" name="signFont" value="'Dokdo', cursive" checked class="text-red-600 focus:ring-red-500">
+                            <span class="text-xs font-bold truncate" style="font-family: 'Dokdo', cursive;">독도체 필기</span>
+                        </label>
+                        <label class="p-2 border border-slate-200 rounded-xl cursor-pointer hover:border-red-300 flex items-center gap-2">
+                            <input type="radio" name="signFont" value="'East Sea Dokdo', cursive" class="text-red-600 focus:ring-red-500">
+                            <span class="text-xs font-bold truncate" style="font-family: 'East Sea Dokdo', cursive;">동해독도 붓체</span>
+                        </label>
+                        <label class="p-2 border border-slate-200 rounded-xl cursor-pointer hover:border-red-300 flex items-center gap-2">
+                            <input type="radio" name="signFont" value="'Gaegu', cursive" class="text-red-600 focus:ring-red-500">
+                            <span class="text-xs font-bold truncate" style="font-family: 'Gaegu', cursive;">개구체 손글씨</span>
+                        </label>
+                        <label class="p-2 border border-slate-200 rounded-xl cursor-pointer hover:border-red-300 flex items-center gap-2">
+                            <input type="radio" name="signFont" value="'Nanum Myeongjo', serif" class="text-red-600 focus:ring-red-500">
+                            <span class="text-xs font-bold truncate" style="font-family: 'Nanum Myeongjo', serif;">나눔명조 서체</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                        <span>서명 글자 크기</span>
+                        <span id="signTextSizeVal" class="text-slate-500 font-mono">100%</span>
+                    </div>
+                    <input type="range" id="signTextSize" min="60" max="150" value="100" class="w-full accent-red-600 cursor-pointer">
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Shared Signature Properties (Colors & Frame Border) -->
+            <div class="space-y-4">
+                <label class="block text-sm font-bold text-slate-900 mb-1">
+                    <i class="fa-solid fa-palette text-red-500 mr-1.5"></i>서명 잉크 색상
+                </label>
+                <div class="flex items-center space-x-2.5">
+                    <button type="button" data-sign-color="#111827" class="sign-color-preset w-7 h-7 rounded-full bg-[#111827] ring-2 ring-offset-1 ring-slate-800 transition-all" title="흑색 먹물"></button>
+                    <button type="button" data-sign-color="#C82A2A" class="sign-color-preset w-7 h-7 rounded-full bg-[#C82A2A] transition-all" title="전통 인주 레드"></button>
+                    <button type="button" data-sign-color="#1E3A8A" class="sign-color-preset w-7 h-7 rounded-full bg-[#1E3A8A] transition-all" title="청남색 잉크"></button>
+                    <button type="button" data-sign-color="#7C2D12" class="sign-color-preset w-7 h-7 rounded-full bg-[#7C2D12] transition-all" title="버건디 삼나무"></button>
+                    <input type="color" id="customSignColor" value="#111827" class="w-7 h-7 rounded-full border-0 p-0 cursor-pointer overflow-hidden shadow-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">서명 외곽 테두리 상자</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" data-sign-frame="none" class="sign-frame-btn active p-2 border-2 border-red-600 bg-red-50/50 rounded-xl text-xs font-semibold text-slate-800">
+                            없음 (단독 사인)
+                        </button>
+                        <button type="button" data-sign-frame="rect" class="sign-frame-btn p-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                            직사각형
+                        </button>
+                        <button type="button" data-sign-frame="round-rect" class="sign-frame-btn p-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                            둥근 사각
+                        </button>
+                        <button type="button" data-sign-frame="oval" class="sign-frame-btn p-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                            타원 상자
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
     </main>
 
     <!-- Guide Modal -->
@@ -346,7 +494,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="font-bold text-slate-900 flex items-center gap-2 text-base">
-                    <i class="fa-solid fa-stamp text-red-600"></i> 전자도장 사용 안내
+                    <i class="fa-solid fa-stamp text-red-600"></i> 전자도장 & 서명 사용 안내
                 </h3>
                 <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -356,19 +504,19 @@
             <div class="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
                 <div class="flex items-start gap-2.5">
                     <span class="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
-                    <p><strong>성명 입력:</strong> 2~4자 성명을 입력하세요. '인' 옵션을 사용하면 도장 규격(4글자 2x2)에 맞게 자동 완성됩니다.</p>
+                    <p><strong>모드 선택:</strong> 상단 탭에서 전통 <strong>도장 생성기</strong> 또는 <strong>커스텀 서명/사인</strong>을 선택하세요.</p>
                 </div>
                 <div class="flex items-start gap-2.5">
                     <span class="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
-                    <p><strong>무료 서체 선택:</strong> 나눔명조, 독도체 등 저작권 걱정 없는 상업용 무료 한글 폰트를 지원합니다.</p>
+                    <p><strong>직접 손서명 그리기:</strong> 스마트폰, 태블릿, 또는 마우스로 우측 미리보기 캔버스 위에서 실제 사인을 자유롭게 그릴 수 있습니다.</p>
                 </div>
                 <div class="flex items-start gap-2.5">
                     <span class="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</span>
-                    <p><strong>인주 효과 조절:</strong> 노이즈 및 마모 효과 슬라이더를 통해 종이에 실제로 찍은 듯한 아날로그 느듦을 연출하세요.</p>
+                    <p><strong>자동 서명 생성:</strong> 손으로 그리기 어려운 경우, 이름 입력 후 저작권 무료 필기체 폰트를 이용해 즉시 스타일리시한 사인을 만드세요.</p>
                 </div>
                 <div class="flex items-start gap-2.5">
                     <span class="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</span>
-                    <p><strong>공문서 삽입:</strong> 다운로드된 PNG 파일은 배경이 완전히 투명하므로 한글(HWP), PDF, Word에 즉시 사용 가능합니다.</p>
+                    <p><strong>투명 PNG 저장:</strong> 배경이 투명하게 자동 처리되어 HWP 한글 문서, MS 워드, PDF 전자결재 서류에 그대로 삽입 가능합니다.</p>
                 </div>
             </div>
 
@@ -384,15 +532,23 @@
         <span id="toastMsg">다운로드가 완료되었습니다.</span>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- JavaScript Application Engine -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Canvas Elements
+            // Main Canvas Elements
             const canvas = document.getElementById('stampCanvas');
             const ctx = canvas.getContext('2d');
             const canvasContainer = document.getElementById('canvasContainer');
 
-            // Form Controls
+            // Tabs & Mode Switching Elements
+            const tabStamp = document.getElementById('tabStamp');
+            const tabSign = document.getElementById('tabSign');
+            const stampControlsPanel = document.getElementById('stampControlsPanel');
+            const signControlsPanel = document.getElementById('signControlsPanel');
+            const previewTitle = document.getElementById('previewTitle');
+            const downloadBtnText = document.getElementById('downloadBtnText');
+
+            // --- Stamp Mode Form Controls ---
             const nameInput = document.getElementById('nameInput');
             const charCounter = document.getElementById('charCounter');
             const addSuffixCheckbox = document.getElementById('addSuffix');
@@ -410,26 +566,45 @@
             const wearLevelInput = document.getElementById('wearLevel');
             const wearVal = document.getElementById('wearVal');
 
-            // Action Buttons
+            // --- Custom Signature Mode Controls ---
+            const signModeDrawBtn = document.getElementById('signModeDrawBtn');
+            const signModeTextBtn = document.getElementById('signModeTextBtn');
+            const handDrawSubPanel = document.getElementById('handDrawSubPanel');
+            const autoTextSubPanel = document.getElementById('autoTextSubPanel');
+            const penToolBtn = document.getElementById('penToolBtn');
+            const eraserToolBtn = document.getElementById('eraserToolBtn');
+            const undoSignBtn = document.getElementById('undoSignBtn');
+            const clearSignBtn = document.getElementById('clearSignBtn');
+            const penWidthInput = document.getElementById('penWidth');
+            const penWidthVal = document.getElementById('penWidthVal');
+            const signTextInput = document.getElementById('signTextInput');
+            const signFontRadios = document.querySelectorAll('input[name="signFont"]');
+            const signTextSizeInput = document.getElementById('signTextSize');
+            const signTextSizeVal = document.getElementById('signTextSizeVal');
+            const signColorPresets = document.querySelectorAll('.sign-color-preset');
+            const customSignColorInput = document.getElementById('customSignColor');
+            const signFrameBtns = document.querySelectorAll('.sign-frame-btn');
+
+            // Action & Modal Elements
             const downloadBtn = document.getElementById('downloadBtn');
             const headerDownloadBtn = document.getElementById('headerDownloadBtn');
             const resetBtn = document.getElementById('resetBtn');
             const bgTransparentBtn = document.getElementById('bgTransparentBtn');
             const bgPaperBtn = document.getElementById('bgPaperBtn');
-            
-            // Modal Elements
             const guideBtn = document.getElementById('guideBtn');
             const guideModal = document.getElementById('guideModal');
             const closeModalBtn = document.getElementById('closeModalBtn');
             const modalConfirmBtn = document.getElementById('modalConfirmBtn');
 
-            // Master Application State
-            let state = {
+            // Global Master State
+            let currentMode = 'stamp'; // 'stamp' or 'sign'
+
+            let stampState = {
                 text: '홍길동',
                 addSuffix: true,
                 traditionalOrder: true,
                 fontFamily: "'Nanum Myeongjo', serif",
-                shape: 'circle', // 'circle', 'oval', 'square', 'rounded-square'
+                shape: 'circle',
                 borderWidth: 14,
                 fontSizeScale: 1.0,
                 color: '#C82A2A',
@@ -437,14 +612,39 @@
                 wear: 15
             };
 
-            // Wait for Web Fonts to Load before initial draw
+            let signState = {
+                subMode: 'draw', // 'draw' or 'text'
+                tool: 'pen', // 'pen' or 'eraser'
+                penWidth: 10,
+                color: '#111827',
+                text: '홍길동',
+                fontFamily: "'Dokdo', cursive",
+                textSizeScale: 1.0,
+                frame: 'none', // 'none', 'rect', 'round-rect', 'oval'
+                strokes: [] // Array of hand-drawn strokes [{points: [{x, y}], color, width, isEraser}]
+            };
+
+            let currentStroke = null;
+            let isDrawing = false;
+
+            // Wait for Web Fonts to Ready
             document.fonts.ready.then(() => {
-                renderStamp();
+                render();
             });
 
-            // Master Stamp Rendering Engine
+            // Master Render Switcher
+            function render() {
+                if (currentMode === 'stamp') {
+                    renderStamp();
+                } else {
+                    renderSignature();
+                }
+            }
+
+            // =========================================================================
+            // STAMP RENDER ENGINE
+            // =========================================================================
             function renderStamp() {
-                // Clear Canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 const width = canvas.width;
@@ -452,44 +652,41 @@
                 const centerX = width / 2;
                 const centerY = height / 2;
 
-                // Process Text Input
-                let fullText = state.text.trim();
+                let fullText = stampState.text.trim();
                 if (!fullText) fullText = '인';
 
-                if (state.addSuffix && !fullText.endsWith('인')) {
+                if (stampState.addSuffix && !fullText.endsWith('인')) {
                     fullText += '인';
                 }
 
-                // Update Character Counter
-                charCounter.textContent = `${state.text.trim().length}글자 입력됨`;
+                charCounter.textContent = `${stampState.text.trim().length}글자 입력됨`;
 
-                // Offscreen Vector Canvas
+                // Offscreen canvas for crisp vector rendering
                 const vectorCanvas = document.createElement('canvas');
                 vectorCanvas.width = width;
                 vectorCanvas.height = height;
                 const vCtx = vectorCanvas.getContext('2d');
 
-                vCtx.fillStyle = state.color;
-                vCtx.strokeStyle = state.color;
-                vCtx.lineWidth = state.borderWidth;
+                vCtx.fillStyle = stampState.color;
+                vCtx.strokeStyle = stampState.color;
+                vCtx.lineWidth = stampState.borderWidth;
                 vCtx.lineJoin = 'round';
                 vCtx.lineCap = 'round';
 
-                // 1. Draw Outer Shape Boundary
                 const padding = 45;
                 vCtx.beginPath();
 
-                if (state.shape === 'circle') {
+                if (stampState.shape === 'circle') {
                     const radius = (width / 2) - padding;
                     vCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                } else if (state.shape === 'oval') {
+                } else if (stampState.shape === 'oval') {
                     const radiusX = (width / 2) - padding;
                     const radiusY = (height / 2) - (padding + 35);
                     vCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-                } else if (state.shape === 'square') {
+                } else if (stampState.shape === 'square') {
                     const side = width - (padding * 2);
                     vCtx.rect(centerX - side / 2, centerY - side / 2, side, side);
-                } else if (state.shape === 'rounded-square') {
+                } else if (stampState.shape === 'rounded-square') {
                     const side = width - (padding * 2);
                     const cornerR = 48;
                     const x = centerX - side / 2;
@@ -498,124 +695,377 @@
                 }
                 vCtx.stroke();
 
-                // 2. Draw Text Layout
                 vCtx.textAlign = 'center';
                 vCtx.textBaseline = 'middle';
 
                 const chars = fullText.split('');
                 const count = chars.length;
 
-                // Auto-calculate base font size depending on word length
                 let baseFontSize = 140;
                 if (count === 1) baseFontSize = 240;
                 else if (count === 2) baseFontSize = 175;
                 else if (count === 3) baseFontSize = 130;
                 else if (count >= 4) baseFontSize = 130;
 
-                const finalFontSize = baseFontSize * state.fontSizeScale;
-                vCtx.font = `700 ${finalFontSize}px ${state.fontFamily}`;
+                const finalFontSize = baseFontSize * stampState.fontSizeScale;
+                vCtx.font = `700 ${finalFontSize}px ${stampState.fontFamily}`;
 
                 if (count === 1) {
                     vCtx.fillText(chars[0], centerX, centerY);
                 } else if (count === 2) {
-                    // Vertical Stack
                     const offset = finalFontSize * 0.55;
                     vCtx.fillText(chars[0], centerX, centerY - offset);
                     vCtx.fillText(chars[1], centerX, centerY + offset);
                 } else if (count === 3) {
-                    // 3-Char Vertical Stack
                     const offset = finalFontSize * 0.78;
                     vCtx.fillText(chars[0], centerX, centerY - offset);
                     vCtx.fillText(chars[1], centerX, centerY);
                     vCtx.fillText(chars[2], centerX, centerY + offset);
                 } else if (count >= 4) {
-                    // 2x2 Stamp Grid Arrangement
                     const gridChars = chars.slice(0, 4);
                     let displayChars = [];
 
-                    if (state.traditionalOrder) {
-                        // Traditional Korean/Chinese Seal Order:
-                        // Top-Right [0], Bottom-Right [1], Top-Left [2], Bottom-Left [3]
-                        displayChars = [
-                            gridChars[2], // Top-Left position receives 3rd char
-                            gridChars[0], // Top-Right position receives 1st char
-                            gridChars[3], // Bottom-Left position receives 4th char
-                            gridChars[1]  // Bottom-Right position receives 2nd char
-                        ];
+                    if (stampState.traditionalOrder) {
+                        displayChars = [gridChars[2], gridChars[0], gridChars[3], gridChars[1]];
                     } else {
-                        // Standard Modern Reading Order (Left to Right, Top to Bottom)
                         displayChars = gridChars;
                     }
 
                     const gapX = (width / 2) - padding - (finalFontSize * 0.52);
                     const gapY = (height / 2) - padding - (finalFontSize * 0.52);
 
-                    // Top-Left
                     vCtx.fillText(displayChars[0], centerX - gapX, centerY - gapY);
-                    // Top-Right
                     vCtx.fillText(displayChars[1], centerX + gapX, centerY - gapY);
-                    // Bottom-Left
                     vCtx.fillText(displayChars[2], centerX - gapX, centerY + gapY);
-                    // Bottom-Right
                     vCtx.fillText(displayChars[3], centerX + gapX, centerY + gapY);
                 }
 
-                // Render vector graphic to main visible canvas
                 ctx.drawImage(vectorCanvas, 0, 0);
 
-                // 3. Apply Realistic Ink Noise & Edge Erosion
-                if (state.noise > 0 || state.wear > 0) {
+                if (stampState.noise > 0 || stampState.wear > 0) {
                     applyRealisticTexture(ctx, width, height);
                 }
             }
 
-            // Realism Shader: Simulates stamp ink bleed, noise, and aging wear
             function applyRealisticTexture(targetCtx, w, h) {
                 const imgData = targetCtx.getImageData(0, 0, w, h);
                 const data = imgData.data;
-
-                const noiseRatio = state.noise / 100;
-                const wearRatio = state.wear / 100;
+                const noiseRatio = stampState.noise / 100;
+                const wearRatio = stampState.wear / 100;
 
                 for (let i = 0; i < data.length; i += 4) {
                     const alpha = data[i + 3];
                     if (alpha > 0) {
-                        // Ink Grain / Noise
                         if (Math.random() < noiseRatio * 0.45) {
                             const reduction = Math.random() * (0.65 * noiseRatio);
                             data[i + 3] = Math.max(0, alpha * (1 - reduction));
                         }
-
-                        // Stamp Border Erosion & Wear
                         if (wearRatio > 0 && Math.random() < wearRatio * 0.28) {
                             data[i + 3] = Math.max(0, alpha - (Math.random() * 240 * wearRatio));
                         }
                     }
                 }
-
                 targetCtx.putImageData(imgData, 0, 0);
             }
 
-            // Event Listeners for UI Inputs
+            // =========================================================================
+            // CUSTOM SIGNATURE RENDER ENGINE
+            // =========================================================================
+            function renderSignature() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const width = canvas.width;
+                const height = canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // 1. Draw Optional Bounding Frame
+                if (signState.frame !== 'none') {
+                    ctx.save();
+                    ctx.strokeStyle = signState.color;
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    const pad = 40;
+
+                    if (signState.frame === 'rect') {
+                        ctx.rect(pad, pad + 60, width - (pad * 2), height - (pad * 2) - 120);
+                    } else if (signState.frame === 'round-rect') {
+                        ctx.roundRect(pad, pad + 60, width - (pad * 2), height - (pad * 2) - 120, 24);
+                    } else if (signState.frame === 'oval') {
+                        ctx.ellipse(centerX, centerY, (width / 2) - pad, (height / 2) - pad - 60, 0, 0, Math.PI * 2);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 2. Render Hand-Draw Strokes or Auto-Text
+                if (signState.subMode === 'draw') {
+                    // Render all hand-drawn strokes with Smooth Bezier Splines
+                    signState.strokes.forEach(stroke => {
+                        drawSingleStroke(ctx, stroke);
+                    });
+                } else {
+                    // Render Auto Handwriting Text
+                    ctx.save();
+                    ctx.fillStyle = signState.color;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const fontSz = Math.round(150 * signState.textSizeScale);
+                    ctx.font = `700 ${fontSz}px ${signState.fontFamily}`;
+                    
+                    const textStr = signState.text.trim() || '서명';
+                    ctx.fillText(textStr, centerX, centerY);
+                    ctx.restore();
+                }
+
+                // Update Undo Button Enabled State
+                undoSignBtn.disabled = (signState.strokes.length === 0);
+            }
+
+            function drawSingleStroke(targetCtx, stroke) {
+                if (!stroke.points || stroke.points.length === 0) return;
+
+                targetCtx.save();
+                if (stroke.isEraser) {
+                    targetCtx.globalCompositeOperation = 'destination-out';
+                    targetCtx.strokeStyle = 'rgba(0,0,0,1)';
+                    targetCtx.lineWidth = stroke.width;
+                } else {
+                    targetCtx.globalCompositeOperation = 'source-over';
+                    targetCtx.strokeStyle = stroke.color;
+                    targetCtx.lineWidth = stroke.width;
+                }
+
+                targetCtx.lineCap = 'round';
+                targetCtx.lineJoin = 'round';
+
+                const pts = stroke.points;
+
+                if (pts.length === 1) {
+                    targetCtx.beginPath();
+                    targetCtx.arc(pts[0].x, pts[0].y, stroke.width / 2, 0, Math.PI * 2);
+                    targetCtx.fill();
+                } else {
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(pts[0].x, pts[0].y);
+
+                    // Smooth Bezier Curve Interpolation
+                    for (let i = 1; i < pts.length - 1; i++) {
+                        const midX = (pts[i].x + pts[i + 1].x) / 2;
+                        const midY = (pts[i].y + pts[i + 1].y) / 2;
+                        targetCtx.quadraticCurveTo(pts[i].x, pts[i].y, midX, midY);
+                    }
+                    targetCtx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                    targetCtx.stroke();
+                }
+                targetCtx.restore();
+            }
+
+            // =========================================================================
+            // HAND-DRAWING INTERACTION EVENTS (Mouse & Touch)
+            // =========================================================================
+            function getCanvasCoordinates(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function startDrawing(e) {
+                if (currentMode !== 'sign' || signState.subMode !== 'draw') return;
+                e.preventDefault();
+                isDrawing = true;
+
+                const coord = getCanvasCoordinates(e);
+                currentStroke = {
+                    points: [coord],
+                    color: signState.color,
+                    width: signState.penWidth,
+                    isEraser: (signState.tool === 'eraser')
+                };
+                signState.strokes.push(currentStroke);
+                renderSignature();
+            }
+
+            function continueDrawing(e) {
+                if (!isDrawing || currentMode !== 'sign' || signState.subMode !== 'draw') return;
+                e.preventDefault();
+
+                const coord = getCanvasCoordinates(e);
+                currentStroke.points.push(coord);
+                renderSignature();
+            }
+
+            function stopDrawing(e) {
+                if (!isDrawing) return;
+                isDrawing = false;
+                currentStroke = null;
+                renderSignature();
+            }
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', continueDrawing);
+            window.addEventListener('mouseup', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', continueDrawing, { passive: false });
+            window.addEventListener('touchend', stopDrawing);
+
+            // =========================================================================
+            // MODE TABS & UI HANDLERS
+            // =========================================================================
+            tabStamp.addEventListener('click', () => {
+                currentMode = 'stamp';
+                tabStamp.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white text-red-600 shadow-sm";
+                tabSign.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+                
+                stampControlsPanel.classList.remove('hidden');
+                signControlsPanel.classList.add('hidden');
+                previewTitle.textContent = "전자도장 미리보기";
+                downloadBtnText.textContent = "투명 도장 다운로드";
+
+                render();
+            });
+
+            tabSign.addEventListener('click', () => {
+                currentMode = 'sign';
+                tabSign.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white text-red-600 shadow-sm";
+                tabStamp.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+                
+                signControlsPanel.classList.remove('hidden');
+                stampControlsPanel.classList.add('hidden');
+                previewTitle.textContent = "커스텀 서명 미리보기";
+                downloadBtnText.textContent = "투명 서명 다운로드";
+
+                render();
+            });
+
+            // Signature Sub-modes (Draw vs Text)
+            signModeDrawBtn.addEventListener('click', () => {
+                signState.subMode = 'draw';
+                signModeDrawBtn.className = "py-2.5 px-3 border-2 border-red-600 bg-red-50/50 rounded-xl text-xs font-bold text-red-600 flex items-center justify-center gap-1.5";
+                signModeTextBtn.className = "py-2.5 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5";
+                handDrawSubPanel.classList.remove('hidden');
+                autoTextSubPanel.classList.add('hidden');
+                render();
+            });
+
+            signModeTextBtn.addEventListener('click', () => {
+                signState.subMode = 'text';
+                signModeTextBtn.className = "py-2.5 px-3 border-2 border-red-600 bg-red-50/50 rounded-xl text-xs font-bold text-red-600 flex items-center justify-center gap-1.5";
+                signModeDrawBtn.className = "py-2.5 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5";
+                autoTextSubPanel.classList.remove('hidden');
+                handDrawSubPanel.classList.add('hidden');
+                render();
+            });
+
+            // Pen vs Eraser
+            penToolBtn.addEventListener('click', () => {
+                signState.tool = 'pen';
+                penToolBtn.className = "py-2 px-3 border border-red-600 bg-red-50 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2";
+                eraserToolBtn.className = "py-2 px-3 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50";
+            });
+
+            eraserToolBtn.addEventListener('click', () => {
+                signState.tool = 'eraser';
+                eraserToolBtn.className = "py-2 px-3 border border-red-600 bg-red-50 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2";
+                penToolBtn.className = "py-2 px-3 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50";
+            });
+
+            undoSignBtn.addEventListener('click', () => {
+                if (signState.strokes.length > 0) {
+                    signState.strokes.pop();
+                    render();
+                }
+            });
+
+            clearSignBtn.addEventListener('click', () => {
+                signState.strokes = [];
+                render();
+                showToast('서명이 지워졌습니다.', 'info');
+            });
+
+            penWidthInput.addEventListener('input', (e) => {
+                signState.penWidth = parseInt(e.target.value);
+                penWidthVal.textContent = `${signState.penWidth}px`;
+            });
+
+            signTextInput.addEventListener('input', (e) => {
+                signState.text = e.target.value;
+                render();
+            });
+
+            signFontRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    signState.fontFamily = e.target.value;
+                    render();
+                });
+            });
+
+            signTextSizeInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                signState.textSizeScale = val / 100;
+                signTextSizeVal.textContent = `${val}%`;
+                render();
+            });
+
+            signColorPresets.forEach(preset => {
+                preset.addEventListener('click', () => {
+                    signColorPresets.forEach(p => p.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-800'));
+                    preset.classList.add('ring-2', 'ring-offset-1', 'ring-slate-800');
+                    signState.color = preset.dataset.signColor;
+                    customSignColorInput.value = signState.color;
+                    render();
+                });
+            });
+
+            customSignColorInput.addEventListener('input', (e) => {
+                signColorPresets.forEach(p => p.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-800'));
+                signState.color = e.target.value;
+                render();
+            });
+
+            signFrameBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    signFrameBtns.forEach(b => b.classList.remove('border-2', 'border-red-600', 'bg-red-50/50', 'text-slate-800'));
+                    btn.classList.add('border-2', 'border-red-600', 'bg-red-50/50', 'text-slate-800');
+                    signState.frame = btn.dataset.signFrame;
+                    render();
+                });
+            });
+
+            // --- Existing Stamp Event Listeners ---
             nameInput.addEventListener('input', (e) => {
-                state.text = e.target.value;
-                renderStamp();
+                stampState.text = e.target.value;
+                render();
             });
 
             addSuffixCheckbox.addEventListener('change', (e) => {
-                state.addSuffix = e.target.checked;
-                renderStamp();
+                stampState.addSuffix = e.target.checked;
+                render();
             });
 
             traditionalOrderCheckbox.addEventListener('change', (e) => {
-                state.traditionalOrder = e.target.checked;
-                renderStamp();
+                stampState.traditionalOrder = e.target.checked;
+                render();
             });
 
             fontRadios.forEach(radio => {
                 radio.addEventListener('change', (e) => {
-                    state.fontFamily = e.target.value;
-                    renderStamp();
+                    stampState.fontFamily = e.target.value;
+                    render();
                 });
             });
 
@@ -627,61 +1077,53 @@
                     });
                     btn.classList.add('active', 'border-red-600', 'bg-red-50/50');
                     btn.querySelector('div').classList.replace('border-slate-400', 'border-red-600');
-                    state.shape = btn.dataset.shape;
-                    renderStamp();
+                    stampState.shape = btn.dataset.shape;
+                    render();
                 });
             });
 
-            // Set default shape button state
-            const defaultShapeBtn = document.querySelector('[data-shape="circle"]');
-            if (defaultShapeBtn) {
-                defaultShapeBtn.classList.add('border-red-600', 'bg-red-50/50');
-            }
-
             borderWidthInput.addEventListener('input', (e) => {
-                state.borderWidth = parseInt(e.target.value);
-                borderWidthVal.textContent = `${state.borderWidth}px`;
-                renderStamp();
+                stampState.borderWidth = parseInt(e.target.value);
+                borderWidthVal.textContent = `${stampState.borderWidth}px`;
+                render();
             });
 
             fontSizeScaleInput.addEventListener('input', (e) => {
                 const val = parseInt(e.target.value);
-                state.fontSizeScale = val / 100;
+                stampState.fontSizeScale = val / 100;
                 fontSizeVal.textContent = `${val}%`;
-                renderStamp();
+                render();
             });
 
-            // Color Picker & Presets
             colorPresets.forEach(preset => {
                 preset.addEventListener('click', () => {
                     colorPresets.forEach(p => p.classList.remove('ring-2', 'ring-offset-1', 'ring-red-500'));
                     preset.classList.add('ring-2', 'ring-offset-1', 'ring-red-500');
-                    state.color = preset.dataset.color;
-                    customColorInput.value = state.color;
-                    renderStamp();
+                    stampState.color = preset.dataset.color;
+                    customColorInput.value = stampState.color;
+                    render();
                 });
             });
 
             customColorInput.addEventListener('input', (e) => {
                 colorPresets.forEach(p => p.classList.remove('ring-2', 'ring-offset-1', 'ring-red-500'));
-                state.color = e.target.value;
-                renderStamp();
+                stampState.color = e.target.value;
+                render();
             });
 
-            // Texture & Wear Sliders
             noiseLevelInput.addEventListener('input', (e) => {
-                state.noise = parseInt(e.target.value);
-                noiseVal.textContent = `${state.noise}%`;
-                renderStamp();
+                stampState.noise = parseInt(e.target.value);
+                noiseVal.textContent = `${stampState.noise}%`;
+                render();
             });
 
             wearLevelInput.addEventListener('input', (e) => {
-                state.wear = parseInt(e.target.value);
-                wearVal.textContent = `${state.wear}%`;
-                renderStamp();
+                stampState.wear = parseInt(e.target.value);
+                wearVal.textContent = `${stampState.wear}%`;
+                render();
             });
 
-            // Background Preview Mode Toggles
+            // Preview Background Toggles
             bgTransparentBtn.addEventListener('click', () => {
                 bgTransparentBtn.classList.add('bg-white', 'text-slate-800', 'shadow-xs');
                 bgTransparentBtn.classList.remove('text-slate-500');
@@ -702,16 +1144,20 @@
                 canvasContainer.classList.add('paper-bg');
             });
 
-            // Download Transparent PNG Logic
-            function downloadStamp() {
-                let filename = state.text.trim() || '전자도장';
-                if (state.addSuffix && !filename.endsWith('인')) {
-                    filename += '인';
+            // PNG Export Engine
+            function downloadImage() {
+                let filename = '';
+                if (currentMode === 'stamp') {
+                    filename = stampState.text.trim() || '전자도장';
+                    if (stampState.addSuffix && !filename.endsWith('인')) {
+                        filename += '인';
+                    }
+                    filename += '_투명도장.png';
+                } else {
+                    filename = (signState.text.trim() || '전자서명') + '_투명서명.png';
                 }
-                filename += '_투명도장.png';
 
                 const dataUrl = canvas.toDataURL('image/png');
-                
                 const link = document.createElement('a');
                 link.download = filename;
                 link.href = dataUrl;
@@ -719,51 +1165,46 @@
                 link.click();
                 document.body.removeChild(link);
 
-                showToast(`'${filename}' 파일이 다운로드되었습니다.`);
+                showToast(`'${filename}' 파일이 저장되었습니다.`);
             }
 
-            downloadBtn.addEventListener('click', downloadStamp);
-            headerDownloadBtn.addEventListener('click', downloadStamp);
-            canvas.addEventListener('click', downloadStamp);
+            downloadBtn.addEventListener('click', downloadImage);
+            headerDownloadBtn.addEventListener('click', downloadImage);
 
-            // Reset Configuration
+            // Reset App
             resetBtn.addEventListener('click', () => {
-                nameInput.value = '홍길동';
-                addSuffixCheckbox.checked = true;
-                traditionalOrderCheckbox.checked = true;
-                borderWidthInput.value = 14;
-                borderWidthVal.textContent = '14px';
-                fontSizeScaleInput.value = 100;
-                fontSizeVal.textContent = '100%';
-                noiseLevelInput.value = 25;
-                noiseVal.textContent = '25%';
-                wearLevelInput.value = 15;
-                wearVal.textContent = '15%';
-                
-                document.querySelector('input[name="fontFamily"][value="\'Nanum Myeongjo\', serif"]').checked = true;
+                if (currentMode === 'stamp') {
+                    nameInput.value = '홍길동';
+                    addSuffixCheckbox.checked = true;
+                    traditionalOrderCheckbox.checked = true;
+                    borderWidthInput.value = 14;
+                    borderWidthVal.textContent = '14px';
+                    fontSizeScaleInput.value = 100;
+                    fontSizeVal.textContent = '100%';
+                    noiseLevelInput.value = 25;
+                    noiseVal.textContent = '25%';
+                    wearLevelInput.value = 15;
+                    wearVal.textContent = '15%';
 
-                state = {
-                    text: '홍길동',
-                    addSuffix: true,
-                    traditionalOrder: true,
-                    fontFamily: "'Nanum Myeongjo', serif",
-                    shape: 'circle',
-                    borderWidth: 14,
-                    fontSizeScale: 1.0,
-                    color: '#C82A2A',
-                    noise: 25,
-                    wear: 15
-                };
-
-                shapeButtons.forEach(b => {
-                    b.classList.remove('active', 'border-red-600', 'bg-red-50/50');
-                    b.querySelector('div').classList.replace('border-red-600', 'border-slate-400');
-                });
-                defaultShapeBtn.classList.add('border-red-600', 'bg-red-50/50');
-                defaultShapeBtn.querySelector('div').classList.replace('border-slate-400', 'border-red-600');
-
-                renderStamp();
-                showToast('초기 설정으로 원복되었습니다.', 'info');
+                    stampState = {
+                        text: '홍길동',
+                        addSuffix: true,
+                        traditionalOrder: true,
+                        fontFamily: "'Nanum Myeongjo', serif",
+                        shape: 'circle',
+                        borderWidth: 14,
+                        fontSizeScale: 1.0,
+                        color: '#C82A2A',
+                        noise: 25,
+                        wear: 15
+                    };
+                } else {
+                    signState.strokes = [];
+                    signTextInput.value = '홍길동';
+                    signState.text = '홍길동';
+                }
+                render();
+                showToast('초기 상태로 원복되었습니다.', 'info');
             });
 
             // Modal Interactions
@@ -778,11 +1219,9 @@
                 const toastIcon = document.getElementById('toastIcon');
 
                 toastMsg.textContent = message;
-                if (type === 'info') {
-                    toastIcon.className = 'fa-solid fa-circle-info text-sky-400 text-base';
-                } else {
-                    toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-base';
-                }
+                toastIcon.className = (type === 'info') 
+                    ? 'fa-solid fa-circle-info text-sky-400 text-base' 
+                    : 'fa-solid fa-circle-check text-emerald-400 text-base';
 
                 toast.classList.remove('translate-y-20', 'opacity-0');
                 toast.classList.add('translate-y-0', 'opacity-100');
