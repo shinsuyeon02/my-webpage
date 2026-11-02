@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학생 역량 성장 분석</title>
+<style>
+:root{--navy:#20304a;--muted:#718096;--line:#e7edf4;--bg:#f4f7fb;--blue:#3978d6;--red:#e45b67;--purple:#7464c8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font-family: Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:linear-gradient(120deg,#253b60,#405b87);color:white;padding:30px 22px 34px}
+.head{max-width:1180px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:18px}
+h1{font-size:clamp(24px,4vw,34px);margin:0 0 8px;letter-spacing:-1px}.sub{color:#d9e4f4;margin:0;font-size:14px;line-height:1.6}
+.pill{border:1px solid #ffffff55;border-radius:30px;padding:9px 14px;font-size:12px;white-space:nowrap;color:#eef4ff}
+main{max-width:1180px;margin:24px auto;padding:0 18px 44px}
+.grid{display:grid;grid-template-columns:minmax(320px, .92fr) minmax(400px,1.35fr);gap:18px;align-items:start}
+.card{background:white;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 5px 18px #243b5308}
+.card h2{font-size:18px;margin:0 0 6px;letter-spacing:-.4px}.desc{font-size:12px;color:var(--muted);margin:0 0 18px;line-height:1.6}
+.input-head{display:grid;grid-template-columns:minmax(0,1fr) 76px 76px 28px;gap:8px;padding:0 4px 8px;color:#8793a5;font-size:11px}
+.metric-row{display:grid;grid-template-columns:minmax(0,1fr) 76px 76px 28px;gap:8px;align-items:center;margin-bottom:9px}
+.metric-row input{width:100%;min-width:0;border:1px solid #e2e8f0;border-radius:9px;padding:10px 8px;font-size:13px;color:var(--navy);outline:none;background:#fff}
+.metric-row input:focus{border-color:#8baee7;box-shadow:0 0 0 3px #3978d615}
+.metric-row .score{ text-align:center;font-weight:650;font-variant-numeric:tabular-nums}
+.remove{border:0;background:#f5f7fa;color:#9aa5b4;border-radius:8px;width:28px;height:34px;cursor:pointer;font-size:17px}
+.remove:hover{background:#fff0f0;color:#d44}
+.add{border:1px dashed #b9c9df;background:#f8fbff;color:#426da8;border-radius:10px;padding:11px;width:100%;font-weight:650;cursor:pointer;margin-top:5px}
+.add:hover{background:#eff6ff}
+.note{font-size:11px;color:#98a3b2;margin:12px 0 0}
+.chart-card{min-height:570px;display:flex;flex-direction:column}
+.chart-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#64748b;margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chart-wrap{width:100%;max-width:620px;margin:8px auto 0;position:relative}
+svg{width:100%;height:auto;overflow:visible}
+.axis-label{font-size:12px;fill:#5e6d82;font-weight:600}
+.gridline{fill:none;stroke:#e6ecf3;stroke-width:1}.axis{stroke:#e1e8f0;stroke-width:1}
+.series-before{fill:#3978d622;stroke:var(--blue);stroke-width:2.5;stroke-linejoin:round}
+.series-after{fill:#e45b6720;stroke:var(--red);stroke-width:2.5;stroke-linejoin:round}
+.point-before{fill:var(--blue);stroke:white;stroke-width:2}.point-after{fill:var(--red);stroke:white;stroke-width:2}
+.chart-foot{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.scale{font-size:11px;color:#94a0b0;background:#f6f8fb;border-radius:20px;padding:6px 11px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:0;border-radius:10px;padding:11px 15px;font-size:12px;font-weight:700;cursor:pointer}
+.primary{background:#2e5f9f;color:white}.primary:hover{background:#244e85}
+.secondary{background:#eef3fa;color:#426184}.secondary:hover{background:#e3ebf6}
+.summary{margin-top:18px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.stat{background:#f7f9fc;border-radius:12px;padding:13px}.stat small{display:block;color:#8793a5;font-size:11px;margin-bottom:7px}.stat strong{font-size:22px;letter-spacing:-.5px}.stat em{font-size:11px;font-style:normal;color:#6c7b90;margin-left:3px}
+.insight{background:#f8faff;border:1px solid #e7eef9;border-radius:12px;padding:14px;font-size:13px;line-height:1.75;color:#52647d}
+.insight b{color:#2e5f9f}
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{border-collapse:collapse;width:100%;font-size:12px;min-width:440px}
+th,td{padding:10px 9px;border-bottom:1px solid #edf1f6;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:#8793a5;font-weight:600;background:#fbfcfe}
+.delta{font-weight:700;color:#21936d}.negative{color:#d85b68}
+footer{text-align:center;color:#9aa5b4;font-size:11px;padding:20px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.chart-card{min-height:auto}.chart-wrap{max-width:560px}}
+@media(max-width:520px){header{padding:24px 17px}.head{align-items:flex-start;flex-direction:column}.pill{font-size:11px}main{padding:0 12px 30px;margin-top:14px}.card{padding:16px;border-radius:15px}.input-head,.metric-row{grid-template-columns:minmax(0,1fr) 62px 62px 25px;gap:5px}.metric-row input{padding:9px 5px;font-size:12px}.remove{width:25px}.summary-grid{gap:6px}.stat{padding:10px}.stat strong{font-size:19px}.chart-top{flex-direction:column}.chart-wrap{margin-top:16px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><h1>학생 역량 성장 분석</h1><p class="sub">사전·사후 평가를 한눈에 비교하고, 학생의 성장과 다음 학습 방향을 발견해 보세요.</p></div><div class="pill">COMPETENCY GROWTH DASHBOARD</div></div></header>
+<main>
+<div class="grid">
+<section class="card">
+<h2>평가 점수 입력</h2><p class="desc">각 역량 영역의 이름과 사전·사후 점수를 입력하세요. 점수는 0~100점 기준입니다.</p>
+<div class="input-head"><span>역량 영역</span><span style="text-align:center">사전</span><span style="text-align:center">사후</span><span></span></div>
+<div id="rows"></div>
+<button class="add" id="addBtn">＋ 역량 지표 추가</button>
+<p class="note">※ 점수를 수정하면 차트와 분석 결과가 자동으로 업데이트됩니다.</p>
+</section>
+<section class="card chart-card">
+<div class="chart-top"><div><h2>역량 변화 레이더 차트</h2><p class="desc" style="margin-bottom:0">두 평가의 점수 분포를 겹쳐서 비교합니다.</p></div>
+<div class="legend"><span><i class="dot" style="background:#3978d6"></i>사전평가</span><span><i class="dot" style="background:#e45b67"></i>사후평가</span></div></div>
+<div class="chart-wrap"><svg id="radar" viewBox="0 0 600 500" role="img" aria-label="사전평가와 사후평가 레이더 차트"></svg></div>
+<div class="chart-foot"><span class="scale">평가 척도: 0~100점</span><span class="scale">꼭짓점에 마우스를 올려 점수 확인</span><span class="scale">미입력 값은 차트에서 제외</span></div>
+<div class="actions"><button class="btn primary" id="saveBtn">↓ 차트 PNG 저장</button><button class="btn secondary" id="analysisSaveBtn">↓ 분석 결과 다운로드</button><button class="btn secondary" id="resetBtn">기본 데이터 복원</button></div>
+</section>
+</div>
+<section class="card summary">
+<h2>평가 결과 분석</h2><p class="desc">입력된 점수를 바탕으로 사전·사후 변화와 주요 성장 영역을 요약합니다.</p>
+<div class="summary-grid">
+<div class="stat"><small>사전 평균</small><strong id="beforeAvg">47.2</strong><em>점</em></div>
+<div class="stat"><small>사후 평균</small><strong id="afterAvg">77.8</strong><em>점</em></div>
+<div class="stat"><small>평균 향상</small><strong id="growth">+30.6</strong><em>점</em></div>
+</div>
+<div class="insight" id="insight"></div>
+<div class="table-wrap"><table><thead><tr><th>역량 영역</th><th>사전평가</th><th>사후평가</th><th>점수 변화</th></tr></thead><tbody id="resultRows"></tbody></table></div>
+</section>
+</main>
+<footer>학생 역량 성장 분석 도구 · 입력 데이터는 현재 브라우저에서만 처리됩니다.</footer>
+<script>
+const initial=[
+["정보검색 능력",45,78],["비판적 사고",38,71],["디지털 도구 활용",52,85],["협업 능력",60,80],["창의적 문제해결",41,75]
+];
+let data=initial.map(x=>[...x]);
+const rows=document.getElementById('rows');
+const svg=document.getElementById('radar');
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs={},parent=svg){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));parent.appendChild(n);return n}
+function clamp(v){return Math.max(0,Math.min(100,Number(v)||0))}
+function renderInputs(){
+ rows.innerHTML='';
+ data.forEach((d,i)=>{
+  const row=document.createElement('div');row.className='metric-row';
+  const name=document.createElement('input');name.value=d[0];name.setAttribute('aria-label','역량 영역명');name.placeholder='역량 영역명';
+  name.addEventListener('input',()=>{data[i][0]=name.value;renderChart();renderSummary()});
+  row.append(name);
+  [1,2].forEach(j=>{const inp=document.createElement('input');inp.className='score';inp.type='number';inp.min=0;inp.max=100;inp.step=1;inp.value=d[j];inp.setAttribute('aria-label',j===1?'사전 점수':'사후 점수');inp.addEventListener('input',()=>{data[i][j]=inp.value.trim()===''?null:clamp(inp.value);renderChart();renderSummary()});row.append(inp)});
+  const del=document.createElement('button');del.className='remove';del.textContent='×';del.title='지표 삭제';del.setAttribute('aria-label','지표 삭제');
+  del.addEventListener('click',()=>{if(data.length<=3){alert('레이더 차트를 위해 최소 3개 지표가 필요합니다.');return}data.splice(i,1);renderInputs();renderAll()});row.append(del);rows.append(row);
+ });
+}
+function renderChart(){
+ svg.innerHTML='';const cx=300,cy=245,R=164,n=data.length;
+ if(!n)return;
+ // concentric polygon levels
+ for(let level=20;level<=100;level+=20){
+  const pts=Array.from({length:n},(_,i)=>{const a=-Math.PI/2+2*Math.PI*i/n;return `${cx+R*level/100*Math.cos(a)},${cy+R*level/100*Math.sin(a)}`}).join(' ');
+  el('polygon',{points:pts,class:'gridline'});
+  const t=el('text',{x:cx+5,y:cy-R*level/100+4,'font-size':10,fill:'#a0abba'});t.textContent=level;
+ }
+ const coords=(idx,val)=>{const a=-Math.PI/2+2*Math.PI*idx/n;return [cx+R*val/100*Math.cos(a),cy+R*val/100*Math.sin(a)]};
+ data.forEach((d,i)=>{
+  const [x,y]=coords(i,100);el('line',{x1:cx,y1:cy,x2:x,y2:y,class:'axis'});
+  const [lx,ly]=coords(i,119);
+  let anchor='middle';if(lx<cx-15)anchor='end';if(lx>cx+15)anchor='start';
+  const label=el('text',{x:lx,y:ly+4,'text-anchor':anchor,class:'axis-label'});
+  const txt=(d[0]||`지표 ${i+1}`).trim();
+  if(txt.length>12){label.textContent=txt.slice(0,12)+'…';label.setAttribute('aria-label',txt)}else label.textContent=txt;
+  label.appendChild(document.createElementNS(NS,'title')).textContent=txt;
+ });
+ [1,2].forEach((j)=>{
+  const valid=data.map((d,i)=>({i,value:d[j],point:d[j]===null||d[j]===''?null:coords(i,clamp(d[j]))})).filter(x=>x.point);
+  const cls=j===1?'series-before':'series-after';
+  // 완전 입력된 경우에만 면을 채우고, 누락값이 있으면 해당 축에서 선을 끊어 표시
+  if(valid.length===n){
+   el('polygon',{points:valid.map(x=>x.point.join(',')).join(' '),class:cls});
+  } else if(valid.length>1){
+   const ordered=data.map((d,i)=>({i,point:d[j]===null||d[j]===''?null:coords(i,clamp(d[j]))}));
+   let segments=[], current=[];
+   ordered.forEach(x=>{if(x.point)current.push(x.point);else{if(current.length>1)segments.push(current);current=[]}});
+   if(current.length>1)segments.push(current);
+   // 첫 축과 마지막 축이 모두 입력되어 있으면 원형 경계에서 이어줌
+   if(ordered[0].point&&ordered[n-1].point&&segments.length>1){
+    const merged=segments[segments.length-1].concat(segments[0]);
+    segments=[merged,...segments.slice(1,-1)];
+   }
+   segments.forEach(seg=>el('polyline',{points:seg.map(p=>p.join(',')).join(' '),fill:'none',stroke:j===1?'#3978d6':'#e45b67','stroke-width':2.5,'stroke-linejoin':'round'}));
+  }
+  valid.forEach(x=>{const p=x.point,i=x.i;const c=el('circle',{cx:p[0],cy:p[1],r:5,class:j===1?'point-before':'point-after'});const title=document.createElementNS(NS,'title');title.textContent=`${data[i][0]} · ${j===1?'사전':'사후'} ${clamp(data[i][j])}점`;c.appendChild(title)});
+ });
+}
+function renderSummary(){
+ const before=data.map(d=>d[1]===null||d[1]===''?null:clamp(d[1])).filter(v=>v!==null);
+ const after=data.map(d=>d[2]===null||d[2]===''?null:clamp(d[2])).filter(v=>v!==null);
+ const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+ const b=avg(before),a=avg(after),diff=(a===null||b===null)?null:a-b;
+ document.getElementById('beforeAvg').textContent=b===null?'—':b.toFixed(1);
+ document.getElementById('afterAvg').textContent=a===null?'—':a.toFixed(1);
+ document.getElementById('growth').textContent=diff===null?'—':(diff>=0?'+':'')+diff.toFixed(1);
+ const deltas=data.map(d=>({name:d[0]||'이름 없는 지표',before:d[1]===null||d[1]===''?null:clamp(d[1]),after:d[2]===null||d[2]===''?null:clamp(d[2]),delta:(d[1]===null||d[1]===''||d[2]===null||d[2]==='')?null:clamp(d[2])-clamp(d[1])}));
+ const comparable=deltas.filter(x=>x.delta!==null);
+ const best=[...comparable].sort((x,y)=>y.delta-x.delta)[0];
+ const weakest=[...deltas].filter(x=>x.after!==null).sort((x,y)=>x.after-y.after)[0];
+ let sentence='';
+ if(b!==null&&a!==null) sentence+=`입력된 점수 기준 평균은 사전 <b>${b.toFixed(1)}점</b>, 사후 <b>${a.toFixed(1)}점</b>이며 평균 변화는 <b>${Math.abs(diff).toFixed(1)}점 ${diff>=0?'상승':'하락'}</b>입니다. `;
+ else sentence+='사전·사후 평균을 비교하려면 두 평가 모두 하나 이상의 점수를 입력하세요. ';
+ if(best)sentence+=`가장 큰 성장을 보인 영역은 <b>${best.name}</b>(${best.delta>=0?'+':''}${best.delta.toFixed(1)}점)입니다. `;
+ if(weakest)sentence+=`입력된 사후 점수 중 가장 낮은 영역은 <b>${weakest.name}</b>(${weakest.after}점)입니다. `;
+ if(data.some(d=>d[1]===null||d[1]===''||d[2]===null||d[2]===''))sentence+='미입력 점수는 0점으로 계산하지 않고 분석 및 차트에서 제외했습니다.';
+ document.getElementById('insight').innerHTML=sentence;
+ document.getElementById('resultRows').innerHTML=deltas.map(d=>`<tr><td>${escapeHtml(d.name)}</td><td>${d.before===null?'—':d.before}</td><td>${d.after===null?'—':d.after}</td><td class="${d.delta===null?'':d.delta>=0?'delta':'negative'}">${d.delta===null?'비교 불가':(d.delta>=0?'+':'')+d.delta.toFixed(0)+'점'}</td></tr>`).join('');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderAll(){renderChart();renderSummary()}
+document.getElementById('addBtn').addEventListener('click',()=>{data.push([`새 역량 ${data.length-4+1}`,0,0]);renderInputs();renderAll()});
+
+document.getElementById('analysisSaveBtn').addEventListener('click',()=>{
+ const before=data.map(d=>d[1]===null||d[1]===''?null:clamp(d[1])).filter(v=>v!==null);
+ const after=data.map(d=>d[2]===null||d[2]===''?null:clamp(d[2])).filter(v=>v!==null);
+ const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+ const b=avg(before),a=avg(after),diff=(a===null||b===null)?null:a-b;
+ const lines=[
+  '학생 역량 사전·사후 평가 분석 결과',
+  `다운로드 일시: ${new Date().toLocaleString('ko-KR')}`,
+  '',
+  `사전평가 평균: ${b===null?'산출 불가':b.toFixed(1)+'점'}`,
+  `사후평가 평균: ${a===null?'산출 불가':a.toFixed(1)+'점'}`,
+  `평균 변화: ${diff===null?'비교 불가':(diff>=0?'+':'')+diff.toFixed(1)+'점'}`,
+  '',
+  '[영역별 결과]',
+  '역량 영역 | 사전평가 | 사후평가 | 변화'
+ ];
+ data.forEach(d=>{
+  const pre=d[1]===null||d[1]===''?null:clamp(d[1]),post=d[2]===null||d[2]===''?null:clamp(d[2]);
+  const delta=pre===null||post===null?null:post-pre;
+  lines.push(`${d[0]||'이름 없는 지표'} | ${pre===null?'미입력':pre+'점'} | ${post===null?'미입력':post+'점'} | ${delta===null?'비교 불가':(delta>=0?'+':'')+delta+'점'}`);
+ });
+ lines.push('', '[분석 요약]',document.getElementById('insight').innerText);
+ const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/plain;charset=utf-8'});
+ const url=URL.createObjectURL(blob),aTag=document.createElement('a');
+ aTag.href=url;aTag.download='학생역량_평가결과_분석.txt';aTag.click();URL.revokeObjectURL(url);
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{data=initial.map(x=>[...x]);renderInputs();renderAll()});
+document.getElementById('saveBtn').addEventListener('click',()=>{
+ const clone=svg.cloneNode(true);clone.setAttribute('xmlns',NS);clone.setAttribute('width','1200');clone.setAttribute('height','1000');
+ const bg=document.createElementNS(NS,'rect');bg.setAttribute('width','100%');bg.setAttribute('height','100%');bg.setAttribute('fill','#ffffff');clone.insertBefore(bg,clone.firstChild);
+ const title=document.createElementNS(NS,'text');title.setAttribute('x','300');title.setAttribute('y','35');title.setAttribute('text-anchor','middle');title.setAttribute('font-size','20');title.setAttribute('font-weight','700');title.setAttribute('fill','#20304a');title.textContent='학생 역량 사전·사후 평가 비교';clone.appendChild(title);
+ const serializer=new XMLSerializer();const source=serializer.serializeToString(clone);
+ const blob=new Blob([source],{type:'image/svg+xml;charset=utf-8'});const url=URL.createObjectURL(blob);const img=new Image();
+ img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=1000;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,1200,1000);ctx.drawImage(img,0,0,1200,1000);URL.revokeObjectURL(url);canvas.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='학생역량_사전사후_비교차트.png';a.click();URL.revokeObjectURL(a.href)})};
+ img.onerror=()=>{URL.revokeObjectURL(url);alert('이미지 저장 중 오류가 발생했습니다.')};img.src=url;
+});
+renderInputs();renderAll();
+</script>
+</body>
+</html>
