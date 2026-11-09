@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3D 주사위 확률 시뮬레이터</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1d2433;--sub:#667085;--line:#e3e7ef;--accent:#4f6bed;--accent-t:#fff;--bar:#6c8cff;--exp:#ef4f6a;--stage:#3a4562;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141f;--card:#1a2030;--text:#e8ecf5;--sub:#9aa5bd;--line:#2c3550;--accent:#7b93ff;--accent-t:#0e1424;--bar:#7b93ff;--exp:#ff7b92;--stage:#151b2b}}
+:root[data-theme="dark"]{--bg:#10141f;--card:#1a2030;--text:#e8ecf5;--sub:#9aa5bd;--line:#2c3550;--accent:#7b93ff;--accent-t:#0e1424;--bar:#7b93ff;--exp:#ff7b92;--stage:#151b2b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.4rem;margin:0 0 4px}
+.lead{color:var(--sub);margin:0 0 16px;font-size:.95rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{font-size:1rem;margin:0 0 10px}
+#stage{position:relative;height:280px;border-radius:10px;background:var(--stage);overflow:hidden}
+#stage canvas{width:100%;height:100%;display:block}
+#last{position:absolute;left:10px;top:8px;font-size:.9rem;color:#c9d2e8;z-index:1}
+#last b{color:#fff;font-size:1.3rem}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);padding:9px 14px;border-radius:9px;cursor:pointer}
+button.p{background:var(--accent);color:var(--accent-t);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.custom{display:flex;gap:6px;align-items:center}
+input[type=number]{font:inherit;width:96px;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.msg{color:var(--exp);font-size:.85rem;min-height:1.2em;margin-top:6px}
+#chart{display:flex;align-items:flex-end;gap:10px;height:220px;padding:8px 6px 0 34px;position:relative;border-bottom:1px solid var(--line)}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;z-index:1}
+.bar{width:100%;max-width:56px;background:var(--bar);border-radius:6px 6px 0 0;min-height:2px;transition:height .15s}
+.val{font-size:.75rem;color:var(--sub);margin-bottom:2px;white-space:nowrap}
+.exp{position:absolute;left:34px;right:0;border-top:2px dashed var(--exp);z-index:2;pointer-events:none}
+.exp span{position:absolute;right:0;top:-18px;font-size:.72rem;color:var(--exp)}
+.axis{position:absolute;left:0;width:30px;text-align:right;font-size:.7rem;color:var(--sub);transform:translateY(50%)}
+.xl{display:flex;gap:10px;padding:4px 0 0 34px}
+.xl div{flex:1;text-align:center;font-weight:600;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin-top:4px;font-size:.92rem}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:center}
+th{color:var(--sub);font-weight:600;font-size:.82rem}
+tfoot td{font-weight:700}
+.note{color:var(--sub);font-size:.8rem;margin-top:8px}
+[hidden]{display:none!important}
+.prog{margin-top:12px}
+.pt{display:flex;justify-content:space-between;font-size:.82rem;color:var(--sub);margin-bottom:4px}
+.pbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .1s}
+.chk{display:grid;gap:8px}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;border:1px solid var(--line);font-size:.92rem}
+.ck em{font-style:normal;font-weight:700;min-width:1.2em;text-align:center;color:var(--sub)}
+.ck.ok{border-color:#22a559}.ck.ok em{color:#22a559}
+.ck.bad{border-color:var(--exp)}.ck.bad em{color:var(--exp)}
+html{-webkit-text-size-adjust:100%}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+input[type=number]{font-size:16px}
+@media(max-width:560px){
+.wrap{padding:14px 12px 28px}
+h1{font-size:1.2rem}
+.lead{font-size:.88rem}
+.card{padding:12px}
+#stage{height:240px}
+.btns{gap:6px}
+.btns>button{flex:1 1 28%;min-height:46px;padding:8px 6px}
+.custom{flex:1 1 100%;order:5}
+.custom input{flex:1;width:auto;min-height:46px}
+.custom button{min-height:46px}
+#reset{order:6;flex:1 1 100%}
+#chart{gap:6px;height:200px;padding-left:30px}
+.exp{left:30px}
+.xl{gap:6px;padding-left:30px}
+.val{font-size:.65rem}
+th,td{padding:6px 3px;font-size:.78rem}
+th{font-size:.68rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎲 3D 주사위 확률 시뮬레이터</h1>
+  <p class="lead">주사위를 굴려 각 눈의 출현 횟수와 비율을 실시간으로 확인해 보세요. 많이 던질수록 이론 확률(1/6 ≈ 16.67%)에 가까워집니다.</p>
+  <div class="grid">
+    <section class="card">
+      <h2>주사위 굴리기</h2>
+      <div id="stage"><div id="last">최근 결과: <b>-</b></div></div>
+      <div class="btns">
+        <button class="p" data-n="1">1회</button>
+        <button class="p" data-n="10">10회</button>
+        <button class="p" data-n="100">100회</button>
+        <span class="custom">
+          <input id="cn" type="number" min="1" max="100000" value="1000" inputmode="numeric" aria-label="사용자 지정 횟수">
+          <button id="cb" class="p">굴리기</button>
+        </span>
+        <button id="reset">초기화</button>
+      </div>
+      <div class="prog" id="prog" hidden>
+        <div class="pt"><span id="pl">굴리는 중…</span><span id="pp">0%</span></div>
+        <div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pbar"><i id="pf"></i></div>
+      </div>
+      <div class="msg" id="msg" role="status"></div>
+    </section>
+    <section class="card">
+      <h2>출현 비율 막대그래프</h2>
+      <div id="chart"></div>
+      <div class="xl" id="xl"></div>
+      <p class="note">점선은 이론 확률 16.67%입니다.</p>
+    </section>
+  </div>
+  <section class="card" style="margin-top:16px">
+    <h2>집계 표</h2>
+    <table>
+      <thead><tr><th>눈</th><th>출현 횟수</th><th>백분율(%)</th><th>이론값(%)</th><th>차이(%p)</th></tr></thead>
+      <tbody id="tb"></tbody>
+      <tfoot><tr><td>합계</td><td id="tt">0</td><td id="tp">0.00</td><td>100.00</td><td></td></tr></tfoot>
+    </table>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var counts=[0,0,0,0,0,0], total=0, running=false;
+  var MAX=100000;
+
+  var stage=document.getElementById('stage');
+  var renderer,scene,camera,mesh,webgl=true;
+  var FACE_VALUES=[2,5,1,6,3,4];
+  var NORMALS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+
+  function faceTexture(n){
+    var c=document.createElement('canvas'); c.width=c.height=128;
+    var g=c.getContext('2d');
+    g.fillStyle='#fbf7ec'; g.fillRect(0,0,128,128);
+    g.strokeStyle='#d8d0bb'; g.lineWidth=6; g.strokeRect(3,3,122,122);
+    var P={1:[[1,1]],2:[[0,0],[2,2]],3:[[0,0],[1,1],[2,2]],4:[[0,0],[2,0],[0,2],[2,2]],5:[[0,0],[2,0],[1,1],[0,2],[2,2]],6:[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]]};
+    g.fillStyle=(n===1)?'#d93a4f':'#1f2430';
+    P[n].forEach(function(p){
+      g.beginPath(); g.arc(28+p[0]*36,28+p[1]*36,(n===1)?15:10,0,Math.PI*2); g.fill();
+    });
+    var t=new THREE.CanvasTexture(c); t.anisotropy=4; return t;
+  }
+
+  try{
+    renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    stage.appendChild(renderer.domElement);
+    scene=new THREE.Scene();
+    camera=new THREE.PerspectiveCamera(40,1,0.1,50);
+    camera.position.set(0,4.2,5.2); camera.lookAt(0,0.3,0);
+    scene.add(new THREE.AmbientLight(0xffffff,0.75));
+    var dl=new THREE.DirectionalLight(0xffffff,0.8); dl.position.set(3,6,4); scene.add(dl);
+    var mats=FACE_VALUES.map(function(v){return new THREE.MeshStandardMaterial({map:faceTexture(v),roughness:0.45,metalness:0.05});});
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.6,1.6),mats);
+    scene.add(mesh);
+    var floor=new THREE.Mesh(new THREE.CircleGeometry(1.5,32),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.4}));
+    floor.rotation.x=-Math.PI/2; floor.position.y=-0.82; scene.add(floor);
+    mesh.quaternion.setFromEuler(new THREE.Euler(0.5,0.6,0.1));
+  }catch(e){
+    webgl=false;
+    stage.insertAdjacentHTML('beforeend','<p style="padding:90px 16px;text-align:center;color:var(--sub)">이 기기에서는 3D 화면을 표시할 수 없어요. 집계 기능은 그대로 사용할 수 있습니다.</p>');
+  }
+
+  function resize(){
+    if(!webgl)return;
+    var w=stage.clientWidth,h=stage.clientHeight;
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize',resize); resize();
+
+  function setFaces(value){
+    if(!webgl)return;
+    for(var i=0;i<FACE_VALUES.length;i++){
+      var hit=value&&FACE_VALUES[i]===value;
+      mats[i].color.setHex(value?(hit?0xffe27a:0xb4bfd6):0xffffff);
+      mats[i].emissive.setHex(hit?0x4a3a00:0x000000);
+    }
+  }
+  var anim=null;
+  function targetQuat(value){
+    var idx=FACE_VALUES.indexOf(value), n=NORMALS[idx];
+    var up=new THREE.Vector3(0,1,0);
+    var q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(n[0],n[1],n[2]),up);
+    var yaw=new THREE.Quaternion().setFromAxisAngle(up,Math.random()*Math.PI*2);
+    return yaw.multiply(q);
+  }
+  function startRoll(value,dur,turns){
+    if(!webgl)return;
+    var axis=new THREE.Vector3(Math.random()-.5,Math.random()*.6+.2,Math.random()-.5).normalize();
+    setFaces(0);
+    anim={t0:performance.now(),dur:dur,turns:turns,axis:axis,target:targetQuat(value),height:dur>600?1.6:0.6};
+  }
+  var spinQ=new THREE.Quaternion();
+  function frame(now){
+    if(webgl){
+      if(anim){
+        var t=Math.min((now-anim.t0)/anim.dur,1), e=1-Math.pow(1-t,3);
+        spinQ.setFromAxisAngle(anim.axis,(1-e)*anim.turns*Math.PI*2);
+        mesh.quaternion.copy(spinQ).multiply(anim.target);
+        mesh.position.y=anim.height*Math.abs(Math.sin(t*Math.PI*2.5))*Math.pow(1-t,1.5);
+        if(t>=1){mesh.quaternion.copy(anim.target);mesh.position.y=0;anim=null;onSettled();}
+      }
+      renderer.render(scene,camera);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  var chart=document.getElementById('chart'), xl=document.getElementById('xl'), tb=document.getElementById('tb');
+  var bars=[],vals=[],rows=[],axisEls=[];
+  for(var a=0;a<=4;a++){var ax=document.createElement('div');ax.className='axis';chart.appendChild(ax);axisEls.push(ax);}
+  var expLine=document.createElement('div'); expLine.className='exp'; expLine.innerHTML='<span>16.67%</span>';
+  chart.appendChild(expLine);
+  for(var i=0;i<6;i++){
+    var col=document.createElement('div'); col.className='col';
+    var v=document.createElement('div'); v.className='val'; v.textContent='0%';
+    var b=document.createElement('div'); b.className='bar'; b.style.height='2px';
+    col.appendChild(v); col.appendChild(b); chart.appendChild(col);
+    bars.push(b); vals.push(v);
+    var x=document.createElement('div'); x.textContent=(i+1); xl.appendChild(x);
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+(i+1)+'</td><td></td><td></td><td>16.67</td><td></td>';
+    tb.appendChild(tr); rows.push(tr);
+  }
+  function render(){
+    var pcts=counts.map(function(c){return total?c*100/total:0;});
+    var mx=Math.max.apply(null,pcts);
+    var scaleMax=Math.max(30,Math.ceil((mx+5)/10)*10);
+    var usable=chart.clientHeight-8-18;
+    for(var i=0;i<6;i++){
+      bars[i].style.height=Math.max(2,pcts[i]/scaleMax*usable)+'px';
+      vals[i].textContent=total?pcts[i].toFixed(1)+'%':'0%';
+      var td=rows[i].children;
+      td[1].textContent=counts[i].toLocaleString('ko-KR');
+      td[2].textContent=pcts[i].toFixed(2);
+      var d=total?pcts[i]-100/6:0;
+      td[4].textContent=total?((d>=0?'+':'')+d.toFixed(2)):'-';
+    }
+    expLine.style.bottom=(100/6/scaleMax*usable)+'px';
+    for(var k=0;k<axisEls.length;k++){
+      var val=scaleMax*k/(axisEls.length-1);
+      axisEls[k].textContent=Math.round(val)+'%';
+      axisEls[k].style.bottom=(val/scaleMax*usable)+'px';
+    }
+    document.getElementById('tt').textContent=total.toLocaleString('ko-KR');
+    document.getElementById('tp').textContent=total?'100.00':'0.00';
+    check();
+  }
+  window.addEventListener('resize',render);
+
+  var lastEl=document.querySelector('#last b'), msg=document.getElementById('msg');
+  var prog=document.getElementById('prog'), pf=document.getElementById('pf'), pl=document.getElementById('pl'), pp=document.getElementById('pp'), pbar=document.getElementById('pbar');
+  var ck1=document.getElementById('ck1'), ck2=document.getElementById('ck2');
+  var lastVal=0, executed=0, token=0, pending=null;
+  var onSettled=function(){ if(pending){var p=pending;pending=null;p();} if(total&&webgl)setFaces(topFace()); check(); };
+  function setCk(el,state,text){
+    if(!el)return;
+    el.className='ck'+(state===true?' ok':state===false?' bad':'');
+    el.firstChild.textContent=state===true?'✓':state===false?'✗':'·';
+    el.lastChild.textContent=text;
+  }
+  function topFace(){
+    var best=-2,bi=0,v=new THREE.Vector3();
+    for(var i=0;i<NORMALS.length;i++){
+      v.set(NORMALS[i][0],NORMALS[i][1],NORMALS[i][2]).applyQuaternion(mesh.quaternion);
+      if(v.y>best){best=v.y;bi=i;}
+    }
+    return FACE_VALUES[bi];
+  }
+  function check(){
+    var sum=counts.reduce(function(a,b){return a+b;},0), f=function(x){return x.toLocaleString('ko-KR');};
+    var ok1=(sum===total&&total===executed);
+    setCk(ck1,ok1,'① 눈별 출현 횟수의 합 '+f(sum)+' · 전체 실행 횟수 '+f(total)+(ok1?' → 일치':' → 불일치'));
+    if(!total){setCk(ck2,null,'② 아직 굴리지 않았어요. 굴리면 3D 윗면과 집계값을 비교합니다.');}
+    else if(!webgl){setCk(ck2,null,'② 3D 화면을 쓸 수 없는 기기라 비교하지 못했어요.');}
+    else if(anim){setCk(ck2,null,'② 주사위가 멈추면 3D 윗면과 집계값을 비교합니다…');}
+    else{
+      var top=topFace(), ok2=(top===lastVal);
+      setCk(ck2,ok2,'② 3D 화면 윗면 '+top+' · 마지막 집계 결과 '+lastVal+(ok2?' → 일치':' → 불일치'));
+    }
+  }
+  function setProg(done,n,label){
+    var p=Math.round(done*100/n);
+    pf.style.width=p+'%'; pbar.setAttribute('aria-valuenow',p);
+    pp.textContent=p+'% ('+done.toLocaleString('ko-KR')+' / '+n.toLocaleString('ko-KR')+'회)';
+    pl.textContent=label;
+  }
+  var allBtns=document.querySelectorAll('button');
+  function lock(f){running=f;allBtns.forEach(function(b){if(b.id!=='reset')b.disabled=f;});}
+
+  function run(n){
+    if(running)return;
+    msg.textContent=''; var my=++token;
+    if(n===1){
+      var r=Math.floor(Math.random()*6)+1;
+      lock(true); lastEl.textContent='…'; startRoll(r,1400,3);
+      pending=function(){counts[r-1]++;total++;executed++;lastVal=r;lastEl.textContent=r;render();lock(false);};
+      if(!webgl){var p=pending;pending=null;p();}
+      return;
+    }
+    lock(true);
+    prog.hidden=false; setProg(0,n,'굴리는 중…');
+    var done=0, chunk=Math.max(1,Math.ceil(n/60));
+    (function step(){
+      if(my!==token)return;
+      var k=Math.min(chunk,n-done), last=0;
+      for(var i=0;i<k;i++){last=Math.floor(Math.random()*6)+1;counts[last-1]++;executed++;}
+      total+=k; done+=k; lastVal=last;
+      lastEl.textContent=last;
+      startRoll(last,320,1);
+      render();
+      setProg(done,n,done<n?'굴리는 중…':'완료!');
+      if(done<n){setTimeout(step,45);}
+      else{lock(false);setTimeout(function(){if(my===token)prog.hidden=true;},1800);}
+    })();
+  }
+
+  document.querySelectorAll('button[data-n]').forEach(function(b){
+    b.addEventListener('click',function(){run(parseInt(b.dataset.n,10));});
+  });
+  document.getElementById('cb').addEventListener('click',function(){
+    var n=parseInt(document.getElementById('cn').value,10);
+    if(!n||n<1||n>MAX){msg.textContent='1 이상 '+MAX.toLocaleString('ko-KR')+' 이하의 정수를 입력해 주세요.';return;}
+    run(n);
+  });
+  document.getElementById('cn').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('cb').click();});
+  document.getElementById('reset').addEventListener('click',function(){
+    setFaces(0); token++; pending=null; anim=null; running=false; counts=[0,0,0,0,0,0]; total=0; executed=0; lastVal=0; lastEl.textContent='-'; msg.textContent=''; prog.hidden=true;
+    lock(false); render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
