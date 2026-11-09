@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 캐치마인드 (그림 맞추기)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Gaegu & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        gaegu: ['Gaegu', 'sans-serif'],
+                        noto: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fffbe6',
+                            100: '#fff1b8',
+                            400: '#ffc53d',
+                            500: '#ffec3d',
+                            600: '#faad14',
+                            primary: '#4f46e5',
+                            secondary: '#06b6d4',
+                            accent: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-gaegu {
+            font-family: 'Gaegu', cursive;
+        }
+        canvas {
+            touch-action: none;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        /* Bounce pulse for loading */
+        @keyframes customPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.85; }
+        }
+        .animate-custom-pulse {
+            animation: customPulse 1.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="goToStartScreen()">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl sm:rounded-2xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-wand-magic-sparkles text-lg sm:text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-black tracking-tight text-slate-900 font-gaegu leading-none">AI 캐치마인드</h1>
+                    <p class="text-[10px] sm:text-xs text-indigo-600 font-bold">Gemini Vision 파워드</p>
+                </div>
+            </div>
+            
+            <div id="headerBadge" class="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full text-xs font-semibold text-indigo-700">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>교실 &amp; 스마트폰 창의 미술 퀴즈</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-3 sm:p-6 flex flex-col justify-center items-center">
+
+        <!-- SCREEN 1: START SCREEN -->
+        <section id="startScreen" class="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-slate-100 p-4 sm:p-8 text-center transition-all">
+            <div class="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs sm:text-sm font-bold mb-3">
+                🎨 AI 그림 맞추기 게임
+            </div>
+            
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight font-gaegu">
+                제시어를 보고 멋지게 그림을 그려보세요!
+            </h2>
+            <p class="text-slate-600 mb-6 text-xs sm:text-base leading-relaxed">
+                원하는 카테고리를 선택하거나 <strong>새로운 카테고리를 직접 추가</strong>할 수 있습니다.<br class="hidden sm:inline">
+                <strong>60초</strong> 동안 그린 그림을 Gemini AI가 맞출 수 있을까요?
+            </p>
+
+            <!-- Category Selection Header & Add Button -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <label class="text-slate-700 font-bold text-sm sm:text-base flex items-center gap-1.5">
+                        <i class="fa-solid fa-shapes text-indigo-500"></i>
+                        <span>카테고리를 선택하세요</span>
+                    </label>
+                    <button type="button" onclick="openAddCategoryModal()" class="text-xs sm:text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition-all">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>카테고리 추가</span>
+                    </button>
+                </div>
+                
+                <!-- Category Grid (Responsive) -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="categoryContainer">
+                    <!-- Categories dynamically generated here -->
+                </div>
+            </div>
+
+            <!-- Start Game Button -->
+            <button id="btnStart" onclick="startGame()" disabled
+                class="w-full bg-slate-300 text-slate-500 cursor-not-allowed font-bold text-base sm:text-lg py-3.5 sm:py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                <span>카테고리를 선택해주세요</span>
+            </button>
+        </section>
+
+
+        <!-- SCREEN 2: GAME / DRAWING SCREEN -->
+        <section id="gameScreen" class="hidden w-full max-w-4xl flex flex-col gap-3 sm:gap-4">
+            <!-- Top Status Bar -->
+            <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-3 sm:p-4 flex items-center justify-between gap-2">
+                <!-- Word Prompt Display -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <span id="displayCategoryBadge" class="bg-indigo-100 text-indigo-800 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                        동물
+                    </span>
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="text-[10px] sm:text-xs text-slate-400 font-semibold hidden sm:inline">제시어:</span>
+                        <span id="targetWordDisplay" class="text-xl sm:text-3xl font-black text-indigo-600 tracking-wider font-gaegu">
+                            사자
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Timer & Home Action -->
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-inner">
+                        <i class="fa-solid fa-stopwatch text-amber-400 animate-pulse text-xs sm:text-base"></i>
+                        <span class="text-[10px] sm:text-xs text-slate-300 hidden sm:inline">남은시간:</span>
+                        <span id="timerDisplay" class="text-base sm:text-xl font-bold font-mono text-amber-400 min-w-[2rem] text-right">60</span>
+                        <span class="text-[10px] sm:text-xs text-slate-400">초</span>
+                    </div>
+
+                    <button onclick="goToStartScreen()" title="처음으로 돌아가기" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-slate-200">
+                        <i class="fa-solid fa-house text-xs"></i>
+                        <span class="hidden sm:inline">처음으로</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Container & Drawing Tools Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4">
+                
+                <!-- Drawing Canvas Area -->
+                <div class="lg:col-span-3 bg-white rounded-2xl border-2 border-slate-200 p-2 sm:p-3 shadow-md relative flex flex-col items-center">
+                    
+                    <!-- Locked Overlay Notice when time expires -->
+                    <div id="lockedOverlay" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm rounded-2xl z-20 flex flex-col items-center justify-center text-white p-4 sm:p-6 text-center animate-fade-in">
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-red-500 text-white rounded-full flex items-center justify-center text-xl sm:text-2xl mb-2 sm:mb-3 shadow-lg">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-bold mb-1">제한시간 종료!</h3>
+                        <p class="text-slate-200 text-xs sm:text-sm mb-4">캔버스가 잠겼습니다. 'AI에게 제출하기' 버튼을 누르세요.</p>
+                        <button onclick="submitDrawing()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold px-5 py-2 sm:px-6 sm:py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm sm:text-base">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>AI 분석 제출하기</span>
+                        </button>
+                    </div>
+
+                    <div class="w-full h-72 sm:h-96 md:h-[400px] bg-white rounded-xl relative overflow-hidden border border-slate-100">
+                        <canvas id="drawingCanvas" class="w-full h-full cursor-crosshair bg-white rounded-xl"></canvas>
+                    </div>
+
+                    <div class="w-full flex items-center justify-between text-[11px] sm:text-xs text-slate-400 px-1 mt-1.5">
+                        <span><i class="fa-solid fa-hand-pointer mr-1"></i>터치/마우스로 그리세요</span>
+                        <span id="canvasSizeIndicator">800 x 600</span>
+                    </div>
+                </div>
+
+                <!-- Drawing Toolbar & Controls -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-md flex flex-col justify-between gap-3">
+                    <div class="space-y-3">
+                        <!-- Tool Mode Selector -->
+                        <div>
+                            <label class="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">도구 선택</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btnPen" onclick="setTool('pen')" class="tool-btn bg-indigo-50 border-2 border-indigo-600 text-indigo-700 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                    <span>연필</span>
+                                </button>
+                                <button id="btnEraser" onclick="setTool('eraser')" class="tool-btn bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-eraser"></i>
+                                    <span>지우개</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Color Palette (Horizontal scrollable on small screens) -->
+                        <div>
+                            <label class="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">색상 선택</label>
+                            <div class="flex lg:grid lg:grid-cols-5 gap-2 overflow-x-auto pb-1" id="colorPalette">
+                                <!-- Colors added via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Brush Size -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">선 두께</label>
+                                <span id="brushSizeVal" class="text-xs font-bold text-indigo-600">6px</span>
+                            </div>
+                            <input type="range" id="brushSize" min="2" max="40" value="6" oninput="updateBrushSize(this.value)"
+                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 pt-2 border-t border-slate-100">
+                            <button onclick="undoCanvas()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>되돌리기</span>
+                            </button>
+                            <button onclick="clearCanvas()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>전체지우기</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button id="btnSubmit" onclick="submitDrawing()" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>AI에게 제출하기</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODAL: ADD CUSTOM CATEGORY -->
+        <div id="addCategoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 animate-fade-in">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                    <h3 class="text-xl font-bold text-slate-900 font-gaegu flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-indigo-600"></i>
+                        <span>새 카테고리 추가하기</span>
+                    </h3>
+                    <button onclick="closeAddCategoryModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <form onsubmit="handleSaveCategory(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">카테고리 이름 &amp; 이모지</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <input type="text" id="customEmojiInput" placeholder="🤖" maxlength="2"
+                                class="col-span-1 border border-slate-300 rounded-xl px-3 py-2 text-center text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="text" id="customCategoryName" placeholder="예: 로봇" required
+                                class="col-span-3 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">제시어 목록 (쉼표로 구분)</label>
+                        <textarea id="customWordsInput" rows="3" placeholder="예: 건담, 트랜스포머, 드론, 청소로봇, 안드로이드" required
+                            class="w-full border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <p class="text-[11px] text-slate-400 mt-1">단어들을 쉼표(,)로 구분해 적어주세요.</p>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2">
+                        <button type="button" onclick="closeAddCategoryModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">
+                            취소
+                        </button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md">
+                            카테고리 저장
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- AI THINKING / LOADING OVERLAY -->
+        <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-white text-center">
+            <div class="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-white/20 flex flex-col items-center animate-custom-pulse">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 relative">
+                    <i class="fa-solid fa-brain animate-bounce"></i>
+                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-4 w-4 bg-indigo-500"></span>
+                    </span>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-black mb-2 text-slate-900 font-gaegu">AI가 생각 중입니다...</h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                    Gemini 비전 AI 모델이 당신이 그린 그림을 분석하여 카테고리 내 명사 단어를 추론하고 있습니다.
+                </p>
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="bg-indigo-600 h-full w-3/4 animate-pulse rounded-full"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SCREEN 3: RESULT SCREEN -->
+        <section id="resultScreen" class="hidden w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-slate-100 p-5 sm:p-8 flex flex-col items-center">
+            
+            <!-- Result Verdict Header -->
+            <div id="verdictBadge" class="mb-5 sm:mb-6 text-center">
+                <!-- Dynamically populated verdict (Correct / Incorrect) -->
+            </div>
+
+            <!-- Comparison Grid -->
+            <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                
+                <!-- Left: User's Drawing Snapshot -->
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center">
+                    <span class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">내가 그린 그림</span>
+                    <div class="w-full h-48 sm:h-64 bg-white rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center shadow-inner">
+                        <img id="resultImageSnapshot" src="" alt="User Drawing" class="max-w-full max-h-full object-contain">
+                    </div>
+                </div>
+
+                <!-- Right: Answer vs AI Guess -->
+                <div class="flex flex-col justify-between gap-3 sm:gap-4">
+                    
+                    <!-- Real Answer -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center">
+                        <span class="text-[11px] sm:text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">실제 정답</span>
+                        <span id="resultActualAnswer" class="text-2xl sm:text-3xl font-black text-indigo-700 font-gaegu tracking-wide">
+                            사자
+                        </span>
+                    </div>
+
+                    <!-- AI Prediction -->
+                    <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center">
+                        <span class="text-[11px] sm:text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">AI의 추론 응답</span>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-robot text-amber-600 text-base sm:text-lg"></i>
+                            <span id="resultAIGuess" class="text-2xl sm:text-3xl font-black text-amber-700 font-gaegu tracking-wide">
+                                호랑이
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Explanation/Note -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs text-slate-500 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
+                        <span id="resultExplanationText">
+                            AI는 제시된 카테고리 맥락을 참고하여 당신의 시각적 요소를 분석했습니다.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="w-full flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+                <button onclick="playAgainSameCategory()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 sm:py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                    <span>같은 카테고리 다시하기</span>
+                </button>
+                <button onclick="goToStartScreen()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 sm:py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i class="fa-solid fa-house"></i>
+                    <span>처음으로 돌아가기</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Simple Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+        AI Catch Mind &copy; Powered by Gemini 3 Flash Vision API
+    </footer>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /**
+         * 1. DEFAULT & CUSTOM WORD DATA POOLS
+         */
+        const DEFAULT_WORD_POOLS = {
+            '동물': { emoji: '🐶', words: ['호랑이', '사자', '토끼', '강아지', '고양이', '코끼리', '기린', '원숭이', '돼지', '곰', '펭귄', '악어', '말', '독수리', '돌고래'] },
+            '과일': { emoji: '🍎', words: ['사과', '바나나', '포도', '수박', '딸기', '복숭아', '파인애플', '오렌지', '키위', '참외', '감', '배', '체리', '레몬', '망고'] },
+            '채소': { emoji: '🥕', words: ['당근', '오이', '가지', '무', '양파', '마늘', '고추', '토마토', '감자', '고구마', '호박', '옥수수', '배추', '브로콜리', '버섯'] },
+            '사물': { emoji: '👓', words: ['안경', '시계', '가방', '모자', '가위', '연필', '우산', '책', '전화기', '의자', '책상', '컵', '거울', '열쇠', '신발'] },
+            '교통수단': { emoji: '🚀', words: ['자동차', '자전거', '비행기', '기차', '버스', '배', '헬리콥터', '오토바이', '소방차', '경찰차', '구급차', '우주선', '트럭', '지하철', '택시'] }
+        };
+
+        const COLOR_LIST = [
+            '#000000', '#4b5563', '#ef4444', '#f97316', '#f59e0b',
+            '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'
+        ];
+
+        // Combined Word Pool state
+        let wordPools = { ...DEFAULT_WORD_POOLS };
+
+        /**
+         * 2. GAME STATE VARIABLES
+         */
+        let selectedCategory = null;
+        let currentWord = '';
+        let timerInterval = null;
+        let timeLeft = 60;
+        let isDrawingLocked = false;
+
+        // Canvas state
+        let canvas, ctx;
+        let isDrawing = false;
+        let currentTool = 'pen'; // 'pen' or 'eraser'
+        let currentColor = '#000000';
+        let currentLineWidth = 6;
+        let canvasHistory = [];
+
+        /**
+         * 3. INITIALIZATION & CATEGORY MANAGEMENT
+         */
+        window.onload = () => {
+            loadCustomCategories();
+            renderCategories();
+            initCanvas();
+            renderPalette();
+            // Handle window resize for canvas responsiveness
+            window.addEventListener('resize', resizeCanvas);
+        };
+
+        function loadCustomCategories() {
+            try {
+                const saved = localStorage.getItem('ai_catchmind_custom_categories');
+                if (saved) {
+                    const customObj = JSON.parse(saved);
+                    wordPools = { ...DEFAULT_WORD_POOLS, ...customObj };
+                }
+            } catch (e) {
+                console.warn('LocalStorage access failed:', e);
+            }
+        }
+
+        function saveCustomCategories() {
+            const customOnly = {};
+            Object.keys(wordPools).forEach(key => {
+                if (!DEFAULT_WORD_POOLS[key]) {
+                    customOnly[key] = wordPools[key];
+                }
+            });
+            try {
+                localStorage.setItem('ai_catchmind_custom_categories', JSON.stringify(customOnly));
+            } catch (e) {
+                console.warn('LocalStorage save failed:', e);
+            }
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categoryContainer');
+            container.innerHTML = '';
+
+            Object.keys(wordPools).forEach(cat => {
+                const item = wordPools[cat];
+                const isCustom = !DEFAULT_WORD_POOLS[cat];
+
+                const btn = document.createElement('div');
+                btn.className = `category-btn bg-white border-2 border-slate-200 hover:border-indigo-400 text-slate-700 p-3 sm:p-4 rounded-2xl flex flex-col items-center justify-center gap-1.5 font-bold transition-all shadow-sm cursor-pointer relative group`;
+                btn.dataset.category = cat;
+                btn.onclick = () => selectCategory(cat);
+
+                btn.innerHTML = `
+                    ${isCustom ? `
+                        <button onclick="deleteCategory(event, '${cat}')" title="삭제" class="absolute top-1.5 right-1.5 text-slate-300 hover:text-rose-500 text-xs p-1 transition-colors">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    ` : ''}
+                    <span class="text-2xl sm:text-3xl">${item.emoji || '📁'}</span>
+                    <span class="text-xs sm:text-sm truncate max-w-full">${cat}</span>
+                `;
+
+                container.appendChild(btn);
+            });
+
+            // Re-apply selection state if any
+            if (selectedCategory && wordPools[selectedCategory]) {
+                selectCategory(selectedCategory);
+            } else {
+                selectedCategory = null;
+                const btnStart = document.getElementById('btnStart');
+                btnStart.disabled = true;
+                btnStart.className = "w-full bg-slate-300 text-slate-500 cursor-not-allowed font-bold text-base sm:text-lg py-3.5 sm:py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2";
+                btnStart.innerHTML = `<i class="fa-solid fa-play"></i> <span>카테고리를 선택해주세요</span>`;
+            }
+        }
+
+        function openAddCategoryModal() {
+            document.getElementById('addCategoryModal').classList.remove('hidden');
+        }
+
+        function closeAddCategoryModal() {
+            document.getElementById('addCategoryModal').classList.add('hidden');
+            document.getElementById('customCategoryName').value = '';
+            document.getElementById('customWordsInput').value = '';
+            document.getElementById('customEmojiInput').value = '';
+        }
+
+        function handleSaveCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('customCategoryName').value.trim();
+            const wordsRaw = document.getElementById('customWordsInput').value.trim();
+            const emoji = document.getElementById('customEmojiInput').value.trim() || '🎨';
+
+            if (!name || !wordsRaw) return;
+
+            const words = wordsRaw.split(',').map(w => w.trim()).filter(w => w.length > 0);
+            if (words.length === 0) return;
+
+            wordPools[name] = { emoji, words };
+            saveCustomCategories();
+            renderCategories();
+            selectCategory(name);
+            closeAddCategoryModal();
+        }
+
+        function deleteCategory(e, cat) {
+            e.stopPropagation();
+            if (DEFAULT_WORD_POOLS[cat]) return;
+            delete wordPools[cat];
+            saveCustomCategories();
+            renderCategories();
+        }
+
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            
+            // Highlight selected button UI
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.dataset.category === cat) {
+                    btn.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700', 'ring-2', 'ring-indigo-400');
+                    btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700');
+                } else {
+                    btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700', 'ring-2', 'ring-indigo-400');
+                    btn.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+                }
+            });
+
+            // Enable Start Button
+            const btnStart = document.getElementById('btnStart');
+            btnStart.disabled = false;
+            btnStart.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+            btnStart.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-indigo-200');
+            btnStart.innerHTML = `<i class="fa-solid fa-play"></i> <span>'${cat}' 게임 시작하기</span>`;
+        }
+
+        function getRandomWord(cat) {
+            const pool = wordPools[cat]?.words || ['그림'];
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            return pool[randomIndex];
+        }
+
+        function startGame() {
+            if (!selectedCategory) return;
+
+            // Pick word
+            currentWord = getRandomWord(selectedCategory);
+
+            // Update UI elements
+            document.getElementById('displayCategoryBadge').textContent = `카테고리: ${selectedCategory}`;
+            document.getElementById('targetWordDisplay').textContent = currentWord;
+
+            // Switch Screen
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            // Reset Drawing, History & Canvas completely
+            isDrawingLocked = false;
+            canvasHistory = []; // Clear undo stack completely
+            document.getElementById('lockedOverlay').classList.add('hidden');
+            resizeCanvas();
+            resetAndClearCanvas();
+
+            // Start Timer
+            startTimer();
+        }
+
+        function goToStartScreen() {
+            clearInterval(timerInterval);
+            // Reset state & undo history
+            canvasHistory = [];
+            isDrawingLocked = false;
+            
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function playAgainSameCategory() {
+            if (selectedCategory) {
+                startGame();
+            } else {
+                goToStartScreen();
+            }
+        }
+
+        /**
+         * 4. TIMER LOGIC
+         */
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 60;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    lockCanvasDueToTimeOver();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.textContent = timeLeft;
+            if (timeLeft <= 10) {
+                timerEl.classList.add('text-rose-500');
+                timerEl.classList.remove('text-amber-400');
+            } else {
+                timerEl.classList.remove('text-rose-500');
+                timerEl.classList.add('text-amber-400');
+            }
+        }
+
+        function lockCanvasDueToTimeOver() {
+            isDrawingLocked = true;
+            document.getElementById('lockedOverlay').classList.remove('hidden');
+        }
+
+
+        /**
+         * 5. CANVAS & DRAWING TOOL ENGINE (MOBILE RESPONSIVE ACCURACY)
+         */
+        function initCanvas() {
+            canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+
+            // Attach Mouse Listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            // Attach Touch Listeners (Mobile & Tablet Support)
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+            // Initial sizing
+            resizeCanvas();
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            // Save current drawing content before resize
+            const dataUrl = canvas.toDataURL();
+
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Fill white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update indicator
+            document.getElementById('canvasSizeIndicator').textContent = `${Math.round(rect.width)} x ${Math.round(rect.height)}`;
+
+            // Restore canvas content
+            if (dataUrl && canvasHistory.length > 0) {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = dataUrl;
+            }
+        }
+
+        function saveCanvasState() {
+            if (canvasHistory.length >= 10) {
+                canvasHistory.shift(); // Keep up to 10 undo steps
+            }
+            canvasHistory.push(canvas.toDataURL());
+        }
+
+        function undoCanvas() {
+            if (isDrawingLocked || canvasHistory.length === 0) return;
+            const lastState = canvasHistory.pop();
+            const img = new Image();
+            img.onload = () => {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = lastState;
+        }
+
+        function resetAndClearCanvas() {
+            if (!ctx || !canvas) return;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            canvasHistory = []; // Clear history so previous image cannot be restored via Undo
+        }
+
+        function clearCanvas() {
+            if (isDrawingLocked) return;
+            saveCanvasState();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            if (isDrawingLocked) return;
+            saveCanvasState();
+            isDrawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || isDrawingLocked) return;
+            const pos = getPos(e);
+
+            ctx.lineWidth = currentLineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = '#ffffff';
+            } else {
+                ctx.strokeStyle = currentColor;
+            }
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        // Touch event handlers with accurate mobile offsets
+        function handleTouchStart(e) {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                startDrawing(touch);
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                draw(touch);
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            const btnPen = document.getElementById('btnPen');
+            const btnEraser = document.getElementById('btnEraser');
+
+            if (tool === 'pen') {
+                btnPen.className = "tool-btn bg-indigo-50 border-2 border-indigo-600 text-indigo-700 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5";
+                btnEraser.className = "tool-btn bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5";
+            } else {
+                btnEraser.className = "tool-btn bg-indigo-50 border-2 border-indigo-600 text-indigo-700 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5";
+                btnPen.className = "tool-btn bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 py-1.5 sm:py-2 px-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5";
+            }
+        }
+
+        function updateBrushSize(val) {
+            currentLineWidth = val;
+            document.getElementById('brushSizeVal').textContent = `${val}px`;
+        }
+
+        function renderPalette() {
+            const container = document.getElementById('colorPalette');
+            container.innerHTML = '';
+            COLOR_LIST.forEach(color => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `w-7 h-7 shrink-0 rounded-full border-2 border-white shadow-sm transition-transform transform hover:scale-110 ${color === currentColor ? 'ring-2 ring-indigo-500 scale-110' : ''}`;
+                btn.style.backgroundColor = color;
+                btn.onclick = () => {
+                    currentColor = color;
+                    setTool('pen');
+                    renderPalette();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+
+        /**
+         * 6. GEMINI VISION API SUBMISSION & INFERENCE
+         */
+        async function submitDrawing() {
+            clearInterval(timerInterval);
+            
+            // Capture image snapshot (base64)
+            const imageDataUrl = canvas.toDataURL('image/png');
+            const base64Data = imageDataUrl.replace(/^data:image\/png;base64,/, '');
+
+            // Show Loading Animation
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            try {
+                // Call Gemini Vision API
+                const aiResponseText = await callGeminiVision(base64Data, selectedCategory);
+                
+                // Process & Display Results
+                displayResult(imageDataUrl, aiResponseText);
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                // Fallback display on error
+                displayResult(imageDataUrl, "분석 실패 (오류 발생)");
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        async function callGeminiVision(base64Image, category) {
+            // Setup Prompt following requirements: PASS ONLY CATEGORY CONTEXT
+            const systemPrompt = "너는 그림을 보고 카테고리에 맞는 단어를 맞추는 AI 캐치마인드 심판이야.";
+            const userPrompt = `이 그림을 분석해줘. 카테고리 [${category}]에 속하는 한국어 명사 딱 한 단어로만 답변해줘. 문장이나 문장부호, 설명 없이 오직 한국어 단어 하나만 출력해야 해. 예: 사자`;
+
+            const apiKey = ""; // Canvas runtime automatically handles key injection
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: userPrompt },
+                            {
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            // Fetch with simple exponential backoff logic
+            let retries = 0;
+            const maxRetries = 3;
+            let delay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const rawAnswer = data.candidates?.[0]?.content?.parts?.[0]?.text || "알수없음";
+                    
+                    // Clean up punctuation or excess spacing
+                    const cleanAnswer = rawAnswer.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
+                    return cleanAnswer;
+
+                } catch (err) {
+                    retries++;
+                    if (retries >= maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+            return "알수없음";
+        }
+
+        /**
+         * 7. DISPLAY RESULT COMPARISON
+         */
+        function displayResult(imageSnapshot, aiGuess) {
+            // Hide game screen, show result screen
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            // Populate snapshot image
+            document.getElementById('resultImageSnapshot').src = imageSnapshot;
+
+            // Populate answers
+            document.getElementById('resultActualAnswer').textContent = currentWord;
+            document.getElementById('resultAIGuess').textContent = aiGuess;
+
+            // Compare correct answer vs AI guess
+            // Strip whitespace and check inclusion
+            const isCorrect = aiGuess.includes(currentWord) || currentWord.includes(aiGuess);
+
+            const verdictBadge = document.getElementById('verdictBadge');
+            const explanationText = document.getElementById('resultExplanationText');
+
+            if (isCorrect) {
+                verdictBadge.innerHTML = `
+                    <div class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 border border-emerald-200 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full shadow-sm text-base sm:text-xl font-black">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-xl sm:text-2xl"></i>
+                        <span>AI가 정답을 맞췄습니다! 🎉</span>
+                    </div>
+                `;
+                explanationText.textContent = `축하합니다! AI가 당신이 그린 [${currentWord}]을(를) 완벽하게 알아채는데 성공했습니다.`;
+            } else {
+                verdictBadge.innerHTML = `
+                    <div class="inline-flex items-center gap-2 bg-rose-100 text-rose-800 border border-rose-200 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full shadow-sm text-base sm:text-xl font-black">
+                        <i class="fa-solid fa-circle-xmark text-rose-600 text-xl sm:text-2xl"></i>
+                        <span>AI가 아쉽게 틀렸습니다! 😅</span>
+                    </div>
+                `;
+                explanationText.textContent = `AI가 그림의 형태를 [${aiGuess}](으)로 오인했습니다. 다음 라운드에 조금 더 특징을 명확히 그려보세요!`;
+            }
+        }
+    </script>
+</body>
+</html>
