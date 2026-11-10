@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한 접시 칼로리</title>
+<style>
+:root{--bg:#fff7ec;--card:#fffdf9;--tx:#3a2a20;--mu:#8a7566;--ln:#f0e0cc;--ac:#e8542f;--ac2:#fde9dc;--wa:#c0392b;
+--c1:#f59e0b;--c2:#ef4444;--c3:#3b82f6;--c4:#22a35a;--c5:#8b5cf6;--tr:#f3e6d4;
+color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e1712;--card:#291f18;--tx:#f7e9da;--mu:#b5a08e;--ln:#3d2e23;--ac:#ff7a50;--ac2:#3d2a1f;--wa:#ff8a7a;--tr:#3d2e23;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1e1712;--card:#291f18;--tx:#f7e9da;--mu:#b5a08e;--ln:#3d2e23;--ac:#ff7a50;--ac2:#3d2a1f;--wa:#ff8a7a;--tr:#3d2e23;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.5}
+main{max-width:560px;margin:0 auto;padding:16px}
+header{text-align:center;padding:14px 0 8px}
+header .logo{font-size:44px;line-height:1}
+h1{font-size:24px;margin:6px 0 2px;color:var(--ac);letter-spacing:-.5px}
+.sub{color:var(--mu);font-size:14px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 2px 0 var(--ln)}
+h2{font-size:16px;margin:0 0 10px}
+.step{display:inline-block;background:var(--ac);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;margin-right:6px}
+button{font:inherit;border:0;border-radius:12px;padding:11px 14px;cursor:pointer;background:var(--ac);color:#fff;font-weight:700}
+button.ghost{background:transparent;color:var(--tx);border:1px solid var(--ln)}
+button.sm{padding:6px 10px;font-size:13px}button.del{background:transparent;color:var(--wa);padding:6px 8px}
+button:disabled{opacity:.45;cursor:default}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;aspect-ratio:4/3;border:2px dashed var(--ac);border-radius:16px;background:var(--ac2) center/cover no-repeat;color:var(--ac);font-weight:700;cursor:pointer;position:relative;overflow:hidden;text-align:center}
+.drop .ic{font-size:40px}.drop small{color:var(--mu);font-weight:500}
+.drop.has{border-style:solid}.drop.has .ic,.drop.has small,.drop.has .t{display:none}
+.drop .chg{display:none;position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px}
+.drop.has .chg{display:block}
+.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}
+input[type=text],input[type=number]{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:9px;width:100%}
+label.lb{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
+.big{font-size:40px;font-weight:800;color:var(--ac);line-height:1.1}.big small{font-size:16px;color:var(--mu);font-weight:600}
+.macros{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.m{background:var(--ac2);border-radius:12px;padding:8px 2px;text-align:center;border-bottom:3px solid var(--k)}
+.m b{display:block;font-size:14px}.m span{font-size:11px;color:var(--mu)}
+.ing{display:grid;grid-template-columns:1fr 84px auto;gap:6px;margin-bottom:6px;align-items:center}
+.msg{color:var(--mu);font-size:14px;text-align:center;padding:8px}.err{color:var(--wa)}
+.note{font-size:12px;color:var(--mu);margin-top:8px}
+.meal{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--ln);gap:8px}
+.meal:first-child{border-top:0}.meal .n{font-weight:700}.meal .s{font-size:12px;color:var(--mu)}
+.nb{margin-top:14px}
+.nb .h{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+.nb .h b{display:flex;align-items:center;gap:6px}.nb .h i{width:10px;height:10px;border-radius:3px;background:var(--k);display:inline-block}
+.nb .h span{color:var(--mu)}
+.track{height:14px;background:var(--tr);border-radius:8px;overflow:hidden}
+.track div{height:100%;border-radius:8px;background:var(--k);transition:width .4s}
+body{-webkit-text-size-adjust:100%;overflow-wrap:anywhere}
+button,input{touch-action:manipulation}
+@media (max-width:480px){
+main{padding:12px}.card{padding:14px;border-radius:16px}
+h1{font-size:21px}header .logo{font-size:38px}.big{font-size:34px}
+button,input[type=text],input[type=number]{min-height:44px}
+button.sm,button.del{min-width:44px}
+.macros{grid-template-columns:repeat(6,1fr)}
+.m:nth-child(-n+3){grid-column:span 2}.m:nth-child(n+4){grid-column:span 3}
+.m b{font-size:15px}.m span{font-size:12px}
+.ing{grid-template-columns:minmax(0,1fr) 76px 44px}
+.nb .h{flex-direction:column;gap:0}.nb .h span{font-size:12px}
+.meal{flex-wrap:wrap}.meal>div:first-child{flex:1 1 140px}
+.drop .ic{font-size:34px}
+}
+@media (min-width:768px){
+main{max-width:680px;padding:28px 20px}.drop{aspect-ratio:16/9}
+}
+@media (max-height:500px) and (orientation:landscape){
+.drop{aspect-ratio:auto;height:55vh}
+}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--tr)}
+.chip i{width:10px;height:10px;border-radius:3px;background:var(--k);display:inline-block}
+.chip.low{box-shadow:inset 0 0 0 2px var(--c2)}.chip.bad{box-shadow:inset 0 0 0 2px var(--c1)}.chip.ok{box-shadow:inset 0 0 0 2px var(--c4)}
+.an h3{font-size:15px;margin:16px 0 6px}.an .sum{font-size:15px;margin:12px 0 0}
+.an .it{background:var(--ac2);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.an .it b{display:block}.an .it p{margin:2px 0 6px;font-size:14px}
+.an .fd{display:flex;flex-wrap:wrap;gap:6px}
+.an .fd span{background:var(--card);border:1px solid var(--ln);border-radius:999px;padding:3px 10px;font-size:13px}
+.an .next{margin-top:12px;padding:10px 12px;border-left:4px solid var(--ac);background:var(--tr);border-radius:8px;font-size:14px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">🍱</div>
+    <h1>한 접시 칼로리</h1>
+    <p class="sub">사진 한 장이면 칼로리와 영양성분이 한눈에!</p>
+  </header>
+
+  <section class="card">
+    <h2><span class="step">1</span>음식 사진 올리기</h2>
+    <label class="drop" id="drop" for="file">
+      <span class="ic">📷</span><span class="t">사진을 눌러 올려요</span><small>또는 여기에 끌어다 놓기</small>
+      <span class="chg">사진 바꾸기</span>
+    </label>
+    <input type="file" id="file" accept="image/*" class="hide">
+    <label class="lb" for="hint"><span class="step">2</span>음식 이름 (선택) — 다르게 분석될 때 적어 주세요</label>
+    <input type="text" id="hint" placeholder="예: 김치볶음밥">
+    <div class="row" style="margin-top:12px">
+      <button id="go" disabled style="flex:1">🔍 AI로 분석하기</button>
+      <button id="reset" class="ghost">다시 시작</button>
+    </div>
+    <div id="status" class="msg hide"></div>
+  </section>
+
+  <section class="card hide" id="resCard">
+    <h2>🍽️ 분석 결과</h2>
+    <input type="text" id="fname" aria-label="음식명">
+    <div style="margin:12px 0 4px"><span class="big" id="tk">0</span> <small>kcal (추정)</small></div>
+    <div class="macros" id="macros"></div>
+    <h2 style="margin-top:16px">주요 재료</h2>
+    <div id="ings"></div>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="newIng" placeholder="재료 추가 (예: 김치)">
+      <button id="addIng" class="sm ghost" style="white-space:nowrap">+ 추가</button>
+    </div>
+    <button id="addDay" style="width:100%;margin-top:14px">오늘 식사에 담기</button>
+    <div class="note">사진으로 추정한 값이라 실제와 다를 수 있어요. 재료의 이름·칼로리를 고치면 합계가 바로 바뀝니다.</div>
+  </section>
+
+  <section class="card">
+    <h2>📅 오늘 먹은 음식 <span id="today" style="color:var(--mu);font-weight:400;font-size:13px"></span></h2>
+    <div><span class="big" id="dk">0</span> <small>kcal</small></div>
+    <div id="bars"></div>
+    <div class="note">막대는 하루 2,000kcal 식단 기준 참고치(탄수화물 324g · 단백질 55g · 지방 54g · 식이섬유 25g · 나트륨 2,000mg) 대비예요.</div>
+    <div id="meals" style="margin-top:12px"></div>
+    <button id="clearDay" class="ghost sm hide" style="margin-top:8px">오늘 기록 비우기</button>
+  </section>
+
+  <section class="card">
+    <h2>🧑‍⚕️ 오늘의 종합 분석</h2>
+    <div id="quick"></div>
+    <button id="anBtn" disabled style="width:100%;margin-top:12px">✨ AI로 오늘 식단 분석하기</button>
+    <div id="anStatus" class="msg hide"></div>
+    <div id="anOut" class="hide"></div>
+    <div class="note">참고용 안내이며 의학적 진단이 아니에요. 나이·건강 상태에 따라 필요한 양은 달라질 수 있어요.</div>
+  </section>
+</main>
+
+<script>
+const COL={carbs:"var(--c1)",protein:"var(--c2)",fat:"var(--c3)",fiber:"var(--c4)",sodium:"var(--c5)"};
+const SHOW=[["carbs","탄수화물","g",324],["protein","단백질","g",55],["fat","지방","g",54],["fiber","식이섬유","g",25],["sodium","나트륨","mg",2000]];
+const KEYS=["kcal","carbs","protein","fat","fiber","sodium"];
+const $=id=>document.getElementById(id);
+let sample=null,blob=null,cur=null,ctl=null;
+const dayKey=()=>{const d=new Date();return "cal-"+d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+let meals=[];
+try{meals=JSON.parse(localStorage.getItem(dayKey())||"[]")}catch(e){meals=[]}
+function save(){try{localStorage.setItem(dayKey(),JSON.stringify(meals))}catch(e){}}
+const r=n=>Math.round(n||0);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+claude.use("sample").then(s=>{sample=s;if(!s)setStatus("이 기능은 Claude 안에서 열었을 때만 동작해요.",true);syncGo();syncAn()}).catch(()=>{});
+function setStatus(t,err){const s=$("status");s.textContent=t||"";s.className="msg"+(t?"":" hide")+(err?" err":"")}
+function syncGo(){$("go").disabled=!sample||!(blob||$("hint").value.trim())}
+$("hint").oninput=syncGo;
+
+function sums(items){const t={};KEYS.forEach(k=>t[k]=items.reduce((a,i)=>a+(+i[k]||0),0));return t}
+function macroHTML(t){return SHOW.map(([k,l,u])=>`<div class="m" style="--k:${COL[k]}"><b>${r(t[k])}${u}</b><span>${l}</span></div>`).join("")}
+
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+  const sc=Math.min(1,1024/Math.max(img.width,img.height));
+  const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  return {url,blob:await new Promise(ok=>c.toBlob(ok,"image/jpeg",.85))};
+}
+async function pick(file){
+  if(!file||!file.type.startsWith("image/"))return;
+  try{
+    const s=await shrink(file);blob=s.blob;
+    const d=$("drop");d.style.backgroundImage=`url("${s.url}")`;d.classList.add("has");
+    cur=null;$("resCard").classList.add("hide");setStatus("");syncGo();
+  }catch(e){setStatus("사진을 읽지 못했어요. 다른 사진을 시도해 주세요.",true)}
+}
+$("file").onchange=e=>pick(e.target.files[0]);
+const dz=$("drop");
+dz.ondragover=e=>{e.preventDefault()};
+dz.ondrop=e=>{e.preventDefault();pick(e.dataTransfer.files[0])};
+
+function buildPrompt(hint){
+  return `${blob?"첨부된 음식 사진을 보고":"아래 음식 이름만 보고"} 한국어로 분석해 주세요. 1인분 전체 양을 기준으로 추정합니다.
+${hint?`사용자가 알려준 음식 이름: "${hint}". 사진이 있어도 이 음식으로 간주하고, 이 음식의 일반적인 재료와 양에 맞춰 분석하세요. 사진에서 보이는 양과 구성은 참고하세요.`:""}
+반드시 JSON만 출력하세요(설명·마크다운 금지). 형식:
+{"name":"음식 이름","items":[{"name":"재료","kcal":숫자,"carbs":숫자(g),"protein":숫자(g),"fat":숫자(g),"fiber":숫자(g),"sodium":숫자(mg)}]}
+재료는 주요 재료 3~8개이며, 재료별 값의 합이 음식 전체 값이 되도록 하세요. 음식이 아니면 {"name":"","items":[]}를 출력하세요.`;
+}
+
+$("go").onclick=async()=>{
+  const hint=$("hint").value.trim();
+  if(!sample||!(blob||hint))return;
+  ctl=new AbortController();
+  $("go").disabled=true;setStatus("AI가 분석하는 중…");
+  try{
+    const opts={modelTier:"default",signal:ctl.signal};
+    if(blob)opts.images=[blob];
+    const d=await sample.json(buildPrompt(hint),opts);
+    if(!d||!Array.isArray(d.items)||!d.items.length){setStatus("음식을 알아보지 못했어요. 음식 이름을 적거나 다른 사진으로 다시 시도해 주세요.",true);return}
+    cur={name:hint||d.name||"음식",items:d.items.map(i=>({name:String(i.name||"재료"),kcal:+i.kcal||0,carbs:+i.carbs||0,protein:+i.protein||0,fat:+i.fat||0,fiber:+i.fiber||0,sodium:+i.sodium||0}))};
+    setStatus("");renderRes();
+    $("resCard").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    if(e&&e.code==="aborted")return;
+    setStatus(e&&e.code==="not_granted"?"Claude 사용을 허용해야 분석할 수 있어요.":e&&e.code==="rate_limited"?"요청이 많아요. 잠시 후 다시 눌러 주세요.":"분석에 실패했어요. 잠시 후 다시 시도해 주세요.",true);
+  }finally{syncGo()}
+};
+
+function renderRes(){
+  if(!cur)return;
+  $("resCard").classList.remove("hide");
+  $("fname").value=cur.name;
+  updateTotals();
+  $("ings").innerHTML=cur.items.map((i,n)=>`<div class="ing"><input type="text" data-n="${n}" data-f="name" value="${esc(i.name)}" aria-label="재료 이름"><input type="number" min="0" inputmode="numeric" data-n="${n}" data-f="kcal" value="${r(i.kcal)}" aria-label="칼로리(kcal)"><button class="del" data-del="${n}" aria-label="재료 삭제">✕</button></div>`).join("")||'<div class="msg">재료가 없어요. 아래에서 추가해 보세요.</div>';
+}
+function updateTotals(){const t=sums(cur.items);$("tk").textContent=r(t.kcal);$("macros").innerHTML=macroHTML(t)}
+$("fname").oninput=e=>{if(cur)cur.name=e.target.value};
+$("ings").oninput=e=>{
+  const el=e.target,n=+el.dataset.n,f=el.dataset.f;if(!cur||!f)return;
+  const it=cur.items[n];
+  if(f==="name"){it.name=el.value}
+  else{const v=Math.max(0,+el.value||0),old=it.kcal;
+    if(old>0)["carbs","protein","fat","fiber","sodium"].forEach(k=>it[k]=it[k]*v/old);
+    it.kcal=v;updateTotals()}
+};
+$("ings").onclick=e=>{const b=e.target.closest("[data-del]");if(!b||!cur)return;cur.items.splice(+b.dataset.del,1);renderRes()};
+
+async function addIngredient(){
+  const name=$("newIng").value.trim();if(!name||!cur)return;
+  const b=$("addIng");b.disabled=true;b.textContent="계산 중…";
+  let it={name,kcal:0,carbs:0,protein:0,fat:0,fiber:0,sodium:0};
+  try{
+    if(sample){
+      const d=await sample.json(`"${name}"이(가) 이 음식에 들어간 일반적인 1회 분량의 영양성분을 추정해 JSON만 출력: {"kcal":숫자,"carbs":숫자(g),"protein":숫자(g),"fat":숫자(g),"fiber":숫자(g),"sodium":숫자(mg)}. 음식: ${cur.name}`,{modelTier:"quick"});
+      KEYS.forEach(k=>it[k]=+d[k]||0);
+    }
+  }catch(e){}
+  cur.items.push(it);$("newIng").value="";b.disabled=false;b.textContent="+ 추가";renderRes();
+}
+$("addIng").onclick=addIngredient;
+$("newIng").onkeydown=e=>{if(e.key==="Enter")addIngredient()};
+
+$("addDay").onclick=()=>{
+  if(!cur||!cur.items.length)return;
+  meals.push({name:cur.name||"음식",...sums(cur.items)});save();renderDay();
+  $("bars").scrollIntoView({behavior:"smooth",block:"center"});
+};
+$("reset").onclick=()=>{
+  if(ctl)ctl.abort();
+  cur=null;blob=null;$("file").value="";$("hint").value="";
+  const d=$("drop");d.style.backgroundImage="";d.classList.remove("has");
+  $("resCard").classList.add("hide");setStatus("");syncGo();
+};
+function renderDay(){
+  const t=sums(meals);
+  $("dk").textContent=r(t.kcal);
+  $("bars").innerHTML=SHOW.map(([k,l,u,g])=>{const p=t[k]/g*100;return `<div class="nb" style="--k:${COL[k]}"><div class="h"><b><i></i>${l}</b><span>${r(t[k])}${u} / ${g.toLocaleString()}${u} · ${r(p)}%</span></div><div class="track"><div style="width:${Math.min(100,p)}%"></div></div></div>`}).join("");
+  $("today").textContent=new Date().toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"short"});
+  $("meals").innerHTML=meals.length?meals.map((m,n)=>`<div class="meal"><div><div class="n">${esc(m.name)}</div><div class="s">탄 ${r(m.carbs)}g · 단 ${r(m.protein)}g · 지 ${r(m.fat)}g</div></div><div class="row"><b>${r(m.kcal)} kcal</b><button class="del" data-m="${n}" aria-label="기록 삭제">✕</button></div></div>`).join(""):'<div class="msg">아직 기록이 없어요. 사진을 분석해 담아 보세요.</div>';
+  $("clearDay").classList.toggle("hide",!meals.length);
+  renderQuick(t);
+}
+$("meals").onclick=e=>{const b=e.target.closest("[data-m]");if(!b)return;meals.splice(+b.dataset.m,1);save();renderDay()};
+$("clearDay").onclick=()=>{meals=[];save();renderDay()};
+function statusOf(k,p){
+if(k==='sodium')return p>100?['bad','과다']:['ok','적정'];
+if(k==='fiber')return p<70?['low','부족']:['ok','충분'];
+if(p<70)return['low','부족'];
+if(p>130)return['bad','과다'];
+return['ok','적정'];}
+function setAn(t,err){const s=$('anStatus');s.textContent=t||'';s.className='msg'+(t?'':' hide')+(err?' err':'')}
+function syncAn(){$('anBtn').disabled=!sample||!meals.length}
+function renderQuick(t){
+$('anOut').classList.add('hide');setAn('');syncAn();
+if(!meals.length){$('quick').innerHTML=`<div class='msg'>식사를 담으면 부족한 영양소와 많이 먹은 영양소를 알려드려요.</div>`;return}
+$('quick').innerHTML=`<div class='chips'>`+SHOW.map(([k,l,u,g])=>{const [c,tx]=statusOf(k,t[k]/g*100);return `<span class='chip ${c}' style='--k:${COL[k]}'><i></i>${l} ${tx}</span>`}).join('')+`</div><div class='note'>지금까지 담은 식사 기준이에요. 아직 식사가 남았다면 부족하게 보일 수 있어요.</div>`;
+}
+const lst=a=>Array.isArray(a)?a:[];
+const fd=a=>lst(a).map(x=>`<span>${esc(x)}</span>`).join('');
+$('anBtn').onclick=async()=>{
+if(!sample||!meals.length)return;
+const t=sums(meals);
+const list=meals.map(m=>`- ${m.name}: ${r(m.kcal)}kcal, 탄수화물 ${r(m.carbs)}g, 단백질 ${r(m.protein)}g, 지방 ${r(m.fat)}g, 식이섬유 ${r(m.fiber)}g, 나트륨 ${r(m.sodium)}mg`).join('\n');
+const q=`아래는 오늘 하루 지금까지 먹은 음식 기록(사진으로 추정한 값)입니다.
+${list}
+합계: ${r(t.kcal)}kcal, 탄수화물 ${r(t.carbs)}g, 단백질 ${r(t.protein)}g, 지방 ${r(t.fat)}g, 식이섬유 ${r(t.fiber)}g, 나트륨 ${r(t.sodium)}mg
+참고 기준(하루 2,000kcal 식단): 탄수화물 324g, 단백질 55g, 지방 54g, 식이섬유 25g, 나트륨 2,000mg.
+아직 남은 식사가 있을 수 있으니, 남은 끼니에서 어떻게 보충하거나 줄이면 좋을지 한국어로 쉽고 친근하게 알려주세요. 의학적 진단은 하지 마세요.
+반드시 JSON만 출력하세요(설명·마크다운 금지). 형식:
+{"summary":"오늘 식단 총평 1~2문장","lacking":[{"nutrient":"영양소","reason":"왜 부족한지 한 문장","foods":["추천 음식","추천 음식"]}],"excess":[{"nutrient":"영양소","reason":"왜 많은지 한 문장","tip":"줄이는 방법 한 문장"}],"others":[{"nutrient":"비타민·무기질 등","reason":"먹은 음식 구성으로 짐작한 한 문장","foods":["추천 음식"]}],"next":"다음 식사 제안 한 문장"}
+부족하거나 많은 항목이 없으면 해당 배열은 비워 두세요. lacking·excess는 각각 최대 3개, others는 최대 2개입니다.`;
+$('anBtn').disabled=true;$('anOut').classList.add('hide');setAn('AI가 오늘 식단을 살펴보는 중…');
+try{
+const d=await sample.json(q,{modelTier:'default'});
+if(!d||typeof d!=='object')throw {code:'bad'};
+$('anOut').innerHTML=`<div class='an'><p class='sum'>${esc(d.summary||'')}</p>`
++(lst(d.lacking).length?`<h3>⬆️ 더 챙기면 좋아요</h3>`+lst(d.lacking).map(x=>`<div class='it'><b>${esc(x.nutrient||'')}</b><p>${esc(x.reason||'')}</p><div class='fd'>${fd(x.foods)}</div></div>`).join(''):'')
++(lst(d.excess).length?`<h3>⬇️ 줄이면 좋아요</h3>`+lst(d.excess).map(x=>`<div class='it'><b>${esc(x.nutrient||'')}</b><p>${esc(x.reason||'')}</p><p>${esc(x.tip||'')}</p></div>`).join(''):'')
++(lst(d.others).length?`<h3>🥬 비타민·무기질 (식단으로 짐작)</h3>`+lst(d.others).map(x=>`<div class='it'><b>${esc(x.nutrient||'')}</b><p>${esc(x.reason||'')}</p><div class='fd'>${fd(x.foods)}</div></div>`).join(''):'')
++(d.next?`<div class='next'>🍽️ ${esc(d.next)}</div>`:'')+`</div>`;
+$('anOut').classList.remove('hide');setAn('');
+}catch(e){
+setAn(e&&e.code==='not_granted'?'Claude 사용을 허용해야 분석할 수 있어요.':e&&e.code==='rate_limited'?'요청이 많아요. 잠시 후 다시 눌러 주세요.':'분석에 실패했어요. 잠시 후 다시 시도해 주세요.',true);
+}finally{syncAn()}
+};
+renderDay();
+</script>
+</body>
+</html>
