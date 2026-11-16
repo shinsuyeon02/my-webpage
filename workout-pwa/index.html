@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>오늘의 운동 체크리스트</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="운동체크">
+
+  <!-- Tailwind CSS & FontAwesome & Chart.js & Confetti -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #0b0f19;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 2px;
+    }
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.6s ease-in-out;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 sm:p-6 selection:bg-emerald-500 selection:text-white">
+
+  <!-- Main Container (App Shell) -->
+  <div class="w-full max-w-md bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-800 flex flex-col h-[95vh] max-h-[880px]">
+    
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white p-5 shrink-0 shadow-lg relative overflow-hidden">
+      <!-- Background decorative glow -->
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex justify-between items-center mb-3">
+        <h1 class="text-xl font-extrabold flex items-center gap-2 tracking-tight text-white drop-shadow-sm">
+          <i class="fa-solid fa-fire-flame-curved text-amber-300"></i> 피트니스 체크
+        </h1>
+        <button onclick="openInstallModal()" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs backdrop-blur-md transition flex items-center gap-1.5 font-semibold shadow-sm">
+          <i class="fa-solid fa-arrow-down-to-bracket"></i> 홈화면 추가
+        </button>
+      </div>
+
+      <!-- View Switcher Tabs -->
+      <div class="flex bg-black/30 p-1 rounded-2xl backdrop-blur-md border border-white/10 mb-3">
+        <button id="tab-today" onclick="switchView('today')" class="flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow">
+          오늘의 운동
+        </button>
+        <button id="tab-stats" onclick="switchView('stats')" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-emerald-100 hover:text-white">
+          월간 통계 & 기록
+        </button>
+      </div>
+
+      <!-- Date Navigator (Today View) -->
+      <div id="date-navigator" class="flex items-center justify-between bg-black/25 px-3.5 py-2 rounded-2xl border border-white/10">
+        <button onclick="changeDate(-1)" class="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-white/20 transition text-emerald-200">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <div class="text-center flex items-center gap-2">
+          <span id="display-date" class="text-sm font-bold tracking-wide"></span>
+          <span id="date-badge" class="text-[10px] bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full font-black shadow">오늘</span>
+        </div>
+        <button onclick="changeDate(1)" class="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-white/20 transition text-emerald-200">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Circular Progress Ring Dashboard (Today View) -->
+      <div id="progress-container" class="mt-3.5 bg-black/30 p-3.5 rounded-2xl backdrop-blur-sm border border-white/10 flex items-center gap-4">
+        <!-- SVG Circular Progress -->
+        <div class="relative w-14 h-14 shrink-0 flex items-center justify-center">
+          <svg class="w-full h-full" viewBox="0 0 36 36">
+            <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path id="progress-ring" class="text-emerald-400 progress-ring-circle" stroke-dasharray="100, 100" stroke-dashoffset="100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <span id="progress-percent" class="text-xs font-black text-white">0%</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-bold text-emerald-200 uppercase tracking-wider">오늘의 성취도</span>
+            <span id="progress-count" class="text-xs font-semibold text-slate-300">0 / 0 완료</span>
+          </div>
+          <p id="encouragement-text" class="text-xs text-slate-200 truncate font-medium">오늘도 멋진 하루를 시작해볼까요? 💪</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- VIEW 1: TODAY WORKOUT LIST -->
+    <div id="view-today" class="flex-1 flex flex-col overflow-hidden bg-slate-900">
+      <!-- Quick Templates -->
+      <div class="px-4 py-2.5 bg-slate-950/60 border-b border-slate-800 shrink-0">
+        <p class="text-[11px] text-slate-400 mb-1.5 font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400"></i> 빠른 운동 추가 템플릿
+        </p>
+        <div class="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar text-xs">
+          <button onclick="addPreset('스쿼트', '20회 3세트')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-xl text-slate-200 shrink-0 transition flex items-center gap-1 font-medium shadow-sm">
+            🏋️ 스쿼트
+          </button>
+          <button onclick="addPreset('푸시업', '15회 3세트')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-xl text-slate-200 shrink-0 transition flex items-center gap-1 font-medium shadow-sm">
+            💪 푸시업
+          </button>
+          <button onclick="addPreset('플랭크', '1분 3세트')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-xl text-slate-200 shrink-0 transition flex items-center gap-1 font-medium shadow-sm">
+            ⏱️ 플랭크
+          </button>
+          <button onclick="addPreset('러닝', '3km')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 rounded-xl text-slate-200 shrink-0 transition flex items-center gap-1 font-medium shadow-sm">
+            🏃 러닝
+          </button>
+        </div>
+      </div>
+
+      <!-- Workout Items List -->
+      <main class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-2.5">
+        <ul id="todo-list" class="space-y-2.5"></ul>
+
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-slate-500 text-center">
+          <div class="w-14 h-14 bg-slate-800/80 rounded-2xl flex items-center justify-center text-slate-400 text-xl mb-3 shadow-inner">
+            <i class="fa-solid fa-dumbbell"></i>
+          </div>
+          <p class="text-xs font-bold text-slate-300">등록된 운동이 없습니다.</p>
+          <p class="text-[11px] text-slate-500 mt-1">상단 템플릿을 누르거나 아래에서 직접 추가하세요!</p>
+        </div>
+      </main>
+
+      <!-- Input Form Footer -->
+      <footer class="p-4 bg-slate-950 border-t border-slate-800 shrink-0">
+        <form id="todo-form" class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="workout-name" 
+              placeholder="운동 이름 (예: 데드리프트)" 
+              required 
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-inner"
+            >
+            <input 
+              type="text" 
+              id="workout-target" 
+              placeholder="목표 수치 (예: 10세트)" 
+              class="w-1/3 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-inner"
+            >
+          </div>
+          <button 
+            type="submit" 
+            class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white font-bold py-2.5 rounded-xl shadow-lg shadow-emerald-900/30 transition duration-200 flex items-center justify-center gap-2 text-xs"
+          >
+            <i class="fa-solid fa-plus text-xs"></i> 새로운 운동 추가하기
+          </button>
+        </form>
+      </footer>
+    </div>
+
+    <!-- VIEW 2: MONTHLY STATS & CALENDAR -->
+    <div id="view-stats" class="flex-1 hidden flex-col overflow-y-auto custom-scrollbar p-4 space-y-4 bg-slate-900">
+      <!-- Month Navigation Header -->
+      <div class="flex items-center justify-between bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80 shadow">
+        <button onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <span id="stats-month-title" class="text-sm font-black text-emerald-300"></span>
+        <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/60 shadow">
+        <h3 class="text-xs font-bold text-slate-300 mb-3 flex items-center gap-1.5">
+          <i class="fa-regular fa-calendar-days text-emerald-400"></i> 월간 캘린더 실천 현황
+        </h3>
+        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+          <span class="text-rose-400">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="text-teal-400">토</span>
+        </div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+      </div>
+
+      <!-- Monthly Chart -->
+      <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/60 shadow">
+        <h3 class="text-xs font-bold text-slate-300 mb-2.5 flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-line text-teal-400"></i> 일자별 운동 완료 건수 추이
+        </h3>
+        <div class="relative h-48 w-full">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PWA INSTALL GUIDE MODAL -->
+  <div id="install-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-slate-100">
+      <button onclick="closeInstallModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div class="text-center mb-4">
+        <div class="w-14 h-14 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-400 text-2xl shadow-lg">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <h3 class="text-base font-black">스마트폰 홈 화면에 추가하기</h3>
+        <p class="text-xs text-slate-400 mt-1">스토어 다운로드 없이 앱처럼 바로 실행하세요!</p>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+        <div class="flex items-start gap-2.5">
+          <span class="bg-emerald-600 text-slate-950 font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px]">1</span>
+          <p><strong>아이폰 (Safari):</strong> 하단 <i class="fa-solid fa-arrow-up-from-bracket text-emerald-400"></i> 공유 버튼 ➔ <strong>'홈 화면에 추가'</strong> 선택</p>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="bg-emerald-600 text-slate-950 font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px]">2</span>
+          <p><strong>안드로이드 (Chrome):</strong> 우측 상단 <i class="fa-solid fa-ellipsis-vertical text-emerald-400"></i> 메뉴 ➔ <strong>'홈 화면에 추가'</strong> 또는 <strong>'앱 설치'</strong> 선택</p>
+        </div>
+      </div>
+
+      <button onclick="closeInstallModal()" class="w-full mt-5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-900/30">
+        확인 완료
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('ServiceWorker registered!', reg))
+          .catch(err => console.log('ServiceWorker registration failed: ', err));
+      });
+    }
+
+    // Application State
+    let currentDate = new Date();
+    let currentStatsMonth = new Date();
+    let workoutData = {};
+    let chartInstance = null;
+
+    // DOM Elements
+    const todoList = document.getElementById('todo-list');
+    const todoForm = document.getElementById('todo-form');
+    const workoutNameInput = document.getElementById('workout-name');
+    const workoutTargetInput = document.getElementById('workout-target');
+    const emptyState = document.getElementById('empty-state');
+    const displayDateEl = document.getElementById('display-date');
+    const dateBadgeEl = document.getElementById('date-badge');
+    const progressRing = document.getElementById('progress-ring');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressCount = document.getElementById('progress-count');
+    const encouragementText = document.getElementById('encouragement-text');
+
+    function init() {
+      loadData();
+      renderTodayView();
+    }
+
+    function loadData() {
+      const stored = localStorage.getItem('workout_pwa_records_v3');
+      if (stored) {
+        try { workoutData = JSON.parse(stored); } catch(e) { workoutData = {}; }
+      } else {
+        const todayStr = formatDateKey(new Date());
+        workoutData[todayStr] = [
+          { id: 1, name: '스쿼트', target: '20회 3세트', completed: false },
+          { id: 2, name: '푸시업', target: '15회 3세트', completed: true },
+          { id: 3, name: '러닝', target: '3km', completed: false }
+        ];
+        saveData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('workout_pwa_records_v3', JSON.stringify(workoutData));
+    }
+
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function isToday(dateObj) {
+      const t = new Date();
+      return dateObj.getDate() === t.getDate() &&
+             dateObj.getMonth() === t.getMonth() &&
+             dateObj.getFullYear() === t.getFullYear();
+    }
+
+    function switchView(view) {
+      const btnToday = document.getElementById('tab-today');
+      const btnStats = document.getElementById('tab-stats');
+      const viewToday = document.getElementById('view-today');
+      const viewStats = document.getElementById('view-stats');
+      const dateNavigator = document.getElementById('date-navigator');
+      const progressContainer = document.getElementById('progress-container');
+
+      if (view === 'today') {
+        btnToday.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow';
+        btnStats.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-emerald-100 hover:text-white';
+        viewToday.classList.remove('hidden');
+        viewStats.classList.add('hidden');
+        dateNavigator.classList.remove('hidden');
+        progressContainer.classList.remove('hidden');
+        renderTodayView();
+      } else {
+        btnStats.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-slate-900 shadow';
+        btnToday.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-emerald-100 hover:text-white';
+        viewStats.classList.remove('hidden');
+        viewToday.classList.add('hidden');
+        dateNavigator.classList.add('hidden');
+        progressContainer.classList.add('hidden');
+        renderStatsView();
+      }
+    }
+
+    function changeDate(days) {
+      currentDate.setDate(currentDate.getDate() + days);
+      renderTodayView();
+    }
+
+    function renderTodayView() {
+      const opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+      displayDateEl.textContent = currentDate.toLocaleDateString('ko-KR', opts);
+
+      if (isToday(currentDate)) {
+        dateBadgeEl.textContent = '오늘';
+        dateBadgeEl.className = 'text-[10px] bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full font-black shadow';
+      } else {
+        dateBadgeEl.textContent = '기록 조회';
+        dateBadgeEl.className = 'text-[10px] bg-teal-600 text-white px-2 py-0.5 rounded-full font-black shadow';
+      }
+
+      const dateKey = formatDateKey(currentDate);
+      const todos = workoutData[dateKey] || [];
+
+      todoList.innerHTML = '';
+      if (todos.length === 0) {
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+      } else {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+      }
+
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = `flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-200 shadow-sm ${
+          todo.completed 
+            ? 'bg-slate-950/40 border-slate-800 text-slate-500' 
+            : 'bg-slate-800/60 border-slate-700/70 text-slate-100 hover:border-emerald-500/50'
+        }`;
+
+        li.innerHTML = `
+          <div class="flex items-center gap-3 cursor-pointer flex-1 min-w-0" onclick="toggleTodo('${dateKey}', ${todo.id})">
+            <button class="w-6 h-6 rounded-xl flex items-center justify-center transition border shrink-0 ${
+              todo.completed 
+                ? 'bg-emerald-500 border-emerald-500 text-slate-950 shadow-md shadow-emerald-900/50' 
+                : 'border-slate-500 hover:border-emerald-400 text-transparent bg-slate-900'
+            }">
+              <i class="fa-solid fa-check text-xs font-black"></i>
+            </button>
+            <div class="truncate">
+              <span class="font-bold text-xs block truncate ${todo.completed ? 'line-through text-slate-500' : 'text-slate-100'}">
+                ${escapeHtml(todo.name)}
+              </span>
+              ${todo.target ? `<span class="text-[11px] text-slate-400 block truncate ${todo.completed ? 'line-through opacity-60' : ''}">${escapeHtml(todo.target)}</span>` : ''}
+            </div>
+          </div>
+          <button onclick="deleteTodo('${dateKey}', ${todo.id})" class="text-slate-500 hover:text-rose-400 p-2 transition rounded-xl hover:bg-slate-800">
+            <i class="fa-regular fa-trash-can text-xs"></i>
+          </button>
+        `;
+        todoList.appendChild(li);
+      });
+
+      updateProgressRing(todos);
+    }
+
+    function updateProgressRing(todos) {
+      const total = todos.length;
+      const completed = todos.filter(t => t.completed).length;
+      const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+      // Circumference is 100 for dasharray
+      const dashOffset = 100 - pct;
+      progressRing.style.strokeDashoffset = dashOffset;
+      progressPercent.textContent = `${pct}%`;
+      progressCount.textContent = `${completed} / ${total} 완료`;
+
+      if (pct === 100 && total > 0) {
+        encouragementText.textContent = '🎉 오늘의 운동 목표를 모두 달성했습니다!';
+        if (isToday(currentDate)) triggerConfetti();
+      } else if (pct >= 50) {
+        encouragementText.textContent = '🔥 절반 이상 달성했어요! 조금만 더 힘내세요!';
+      } else {
+        encouragementText.textContent = '💪 오늘의 운동 목표를 차근차근 달성해보세요!';
+      }
+    }
+
+    function toggleTodo(dateKey, id) {
+      if (!workoutData[dateKey]) return;
+      workoutData[dateKey] = workoutData[dateKey].map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveData();
+      renderTodayView();
+    }
+
+    todoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = workoutNameInput.value.trim();
+      const target = workoutTargetInput.value.trim();
+      if (!name) return;
+
+      const dateKey = formatDateKey(currentDate);
+      if (!workoutData[dateKey]) workoutData[dateKey] = [];
+
+      workoutData[dateKey].push({ id: Date.now(), name, target, completed: false });
+      saveData();
+      renderTodayView();
+
+      workoutNameInput.value = '';
+      workoutTargetInput.value = '';
+      workoutNameInput.focus();
+    });
+
+    function addPreset(name, target) {
+      const dateKey = formatDateKey(currentDate);
+      if (!workoutData[dateKey]) workoutData[dateKey] = [];
+      workoutData[dateKey].push({ id: Date.now(), name, target, completed: false });
+      saveData();
+      renderTodayView();
+    }
+
+    function deleteTodo(dateKey, id) {
+      if (!workoutData[dateKey]) return;
+      workoutData[dateKey] = workoutData[dateKey].filter(t => t.id !== id);
+      saveData();
+      renderTodayView();
+    }
+
+    let lastConfetti = 0;
+    function triggerConfetti() {
+      const now = Date.now();
+      if (now - lastConfetti < 4000) return;
+      lastConfetti = now;
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+    }
+
+    function changeMonth(delta) {
+      currentStatsMonth.setMonth(currentStatsMonth.getMonth() + delta);
+      renderStatsView();
+    }
+
+    function renderStatsView() {
+      const year = currentStatsMonth.getFullYear();
+      const month = currentStatsMonth.getMonth();
+      document.getElementById('stats-month-title').textContent = `${year}년 ${month + 1}월`;
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.appendChild(document.createElement('div'));
+      }
+
+      const counts = [];
+      const labels = [];
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dStr = String(day).padStart(2, '0');
+        const mStr = String(month + 1).padStart(2, '0');
+        const dateKey = `${year}-${mStr}-${dStr}`;
+
+        labels.push(`${day}일`);
+        const todos = workoutData[dateKey] || [];
+        const total = todos.length;
+        const comp = todos.filter(t => t.completed).length;
+        counts.push(comp);
+
+        const cell = document.createElement('div');
+        let cls = 'bg-slate-800/40 border-slate-700/50 text-slate-300';
+        if (total > 0 && comp === total) {
+          cls = 'bg-emerald-600/30 border-emerald-500/80 text-emerald-300 font-black shadow-sm';
+        } else if (total > 0 && comp > 0) {
+          cls = 'bg-teal-600/30 border-teal-500/70 text-teal-300 font-bold';
+        } else if (total > 0) {
+          cls = 'bg-slate-800 border-slate-700 text-slate-400';
+        }
+
+        cell.className = `h-11 rounded-xl border flex flex-col items-center justify-center text-[11px] transition cursor-pointer hover:bg-slate-700 ${cls}`;
+        cell.innerHTML = `<span>${day}</span>${total > 0 ? `<span class="text-[9px] opacity-80">${comp}/${total}</span>` : ''}`;
+        cell.onclick = () => {
+          currentDate = new Date(year, month, day);
+          switchView('today');
+        };
+        grid.appendChild(cell);
+      }
+
+      renderChart(labels, counts);
+    }
+
+    function renderChart(labels, data) {
+      const ctx = document.getElementById('monthlyChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '완료한 운동 수',
+            data: data,
+            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 10 } },
+            y: { beginAtZero: true, grid: { color: 'rgba(51, 65, 85, 0.4)' }, ticks: { color: '#94a3b8', font: { size: 10 }, stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    function openInstallModal() { document.getElementById('install-modal').classList.remove('hidden'); }
+    function closeInstallModal() { document.getElementById('install-modal').classList.add('hidden'); }
+    function escapeHtml(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+    init();
+  </script>
+</body>
+</html>
