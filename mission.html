@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>우리 반 스마트 장보기 미션</title>
+<style>
+:root{--bg:#d8d3ca;--card:#fffefa;--ink:#222;--sub:#6b6b6b;--main:#2b2b2b;--main2:#efeadc;--ok:#1f7a45;--bad:#c62828;--line:#cfc8b8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1c;--card:#2b2a27;--ink:#eee;--sub:#aaa;--main:#e8e4d8;--main2:#3a3833;--line:#4a4840}.btn,.qty button{color:#222!important}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"D2Coding","Courier New","Noto Sans KR","Malgun Gothic",monospace;font-size:16px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:1.7rem;text-align:center;margin:8px 0 4px}
+.lead{text-align:center;color:var(--sub);margin:0 0 20px}
+.missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.mcard{background:var(--card);border:2px dashed var(--sub);border-radius:3px;box-shadow:0 3px 0 rgba(0,0,0,.18);padding:20px;text-align:center;cursor:pointer;font:inherit;color:inherit}
+.mcard:hover{border-color:var(--main);transform:translateY(-2px)}
+.mcard .e{font-size:3rem}.mcard b{display:block;font-size:1.2rem;margin:6px 0}
+.mcard .p{color:var(--main);font-weight:700;font-size:1.1rem}.mcard small{display:block;color:var(--sub);margin-top:6px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border:2px dashed var(--sub);border-radius:3px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
+.bar .t{font-weight:700}.num{font-weight:800;font-size:1.15rem}
+.left{color:var(--ok)}.over{color:var(--bad)}
+.meter{height:12px;background:var(--main2);border-radius:0;overflow:hidden;width:100%}
+.meter i{display:block;height:100%;background:var(--main);transition:width .2s}
+.meter.full i{background:var(--bad)}
+.warn{display:none;background:#fde8e8;color:#b42318;border:2px dashed #b42318;border-radius:3px;padding:10px 14px;margin-bottom:12px;font-weight:700}
+.warn.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.item{background:var(--card);border:2px dashed var(--line);border-radius:3px;padding:12px;text-align:center}
+.item.sel{border-color:var(--main);background:var(--main2)}
+.item .e{font-size:2.4rem}.item .n{font-weight:700}.item .pr{color:var(--sub)}
+.qty{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.qty button{width:38px;height:38px;border-radius:3px;border:none;background:var(--main);color:#fff;font-size:1.3rem;font-weight:800;cursor:pointer}
+.qty button:disabled{opacity:.35;cursor:not-allowed}
+.qty span{min-width:24px;font-weight:800;font-size:1.2rem}
+.btn{border:2px solid var(--ink);border-radius:3px;padding:12px 22px;font:inherit;font-weight:800;background:var(--main);color:#fff;cursor:pointer}
+.btn.ghost{background:var(--main2);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.receipt{position:relative;background:var(--card);padding:26px 20px 40px;max-width:520px;margin:0 auto;-webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%}
+.receipt h2{text-align:center;margin:0 0 4px}
+.receipt table{width:100%;border-collapse:collapse;margin:12px 0}
+.receipt td,.receipt th{padding:6px 4px;border-bottom:1px dotted var(--line);text-align:left}
+.receipt td:nth-child(n+2),.receipt th:nth-child(n+2){text-align:right}
+.sum{display:flex;justify-content:space-between;font-weight:700;padding:3px 0}hr{border:none;border-top:2px dashed var(--sub);margin:14px 0}.stamp{position:absolute;right:16px;top:64px;transform:rotate(-14deg);border:4px double #c62828;color:#c62828;font-weight:900;font-size:1.5rem;padding:4px 12px;border-radius:6px;opacity:.85}.barcode{height:46px;margin:14px 0 4px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 9px,var(--ink) 9px 12px,transparent 12px 14px)}.thanks{text-align:center;font-weight:700;margin-top:8px}textarea[readonly]{opacity:.75}
+textarea{width:100%;min-height:130px;border:2px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--card);color:var(--ink);resize:vertical}
+.hint{color:var(--sub);font-size:.9rem}
+.reason-print{display:none;white-space:pre-wrap}
+.toast{text-align:center;color:var(--ok);font-weight:700;min-height:1.5em}
+.hide{display:none!important}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}textarea{font-size:16px}@media (max-width:600px){body{font-size:15px}.wrap{padding:10px}h1{font-size:1.35rem}.missions{grid-template-columns:1fr}.bar{gap:4px 10px;padding:8px 10px;font-size:.88rem}.bar .t{width:100%}.num{font-size:1rem}.grid{grid-template-columns:repeat(2,1fr);gap:10px}.item{padding:10px 8px}.item .e{font-size:2rem}.qty button{width:44px;height:44px;font-size:1.5rem}.actions{flex-direction:column}.actions .btn{width:100%;padding:14px}.receipt{padding:22px 14px 38px}.stamp{font-size:1.2rem;top:56px;right:10px}}@media print{.receipt{-webkit-mask:none;mask:none}body{background:#fff;color:#000}.noprint{display:none!important}.receipt{border:1px solid #000;background:#fff;color:#000}textarea{display:none}.reason-print{display:block;border:1px solid #999;padding:10px;border-radius:8px;margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="s1">
+  <h1>🛒 우리 반 스마트 장보기 미션</h1>
+  <p class="lead">정해진 예산 안에서 똑똑하게 장을 보고, 왜 샀는지 적어 봐요!</p>
+  <div class="missions" id="missions"></div>
+</section>
+
+<section id="s2" class="hide">
+  <div class="bar">
+    <span class="t" id="mtitle"></span>
+    <span>예산 <span class="num" id="bud"></span></span>
+    <span>사용 <span class="num" id="spent">0원</span></span>
+    <span>잔액 <span class="num left" id="rest"></span></span>
+    <span>총 <span class="num" id="cnt">0</span>개</span>
+    <div class="meter" id="meter"><i id="fill" style="width:0"></i></div>
+  </div>
+  <div class="warn" id="warn">⚠️ 예산을 넘었어요! 수량을 줄여야 제출할 수 있어요.</div>
+  <p class="hint" id="tip"></p>
+  <div class="grid" id="grid"></div>
+  <div class="actions">
+    <button class="btn ghost" id="back">← 미션 다시 고르기</button>
+    <button class="btn ghost" id="reset">장바구니 비우기</button>
+    <button class="btn" id="submit" disabled>제출하기</button>
+  </div>
+</section>
+
+<section id="s3" class="hide">
+  <div class="receipt" id="receipt">
+    <h2>🧾 스마트 마트 영수증</h2><div style="text-align:center">================================</div>
+    <div style="text-align:center" id="rname"></div>
+    <div style="text-align:center;color:var(--sub);font-size:.9rem" id="rdate"></div>
+    <table><thead><tr><th>품목</th><th>수량</th><th>금액</th></tr></thead><tbody id="rbody"></tbody></table>
+    <div class="sum"><span>예산</span><span id="rbud"></span></div>
+    <div class="sum"><span>사용 금액</span><span id="rspent"></span></div>
+    <div class="sum"><span>남은 잔액</span><span id="rrest" class="left"></span></div>
+    <hr>
+    <label for="reason"><b>이 물건들을 선택한 이유를 작성해 주세요</b></label>
+    <textarea id="reason" class="noprint" placeholder="(5글자 이상 쓰면 제출할 수 있어요) 예) 카레에는 감자와 당근이 꼭 필요해서 먼저 담았고, 남은 돈으로…"></textarea>
+    <div class="reason-print" id="reasonP"></div><div class="barcode hide" id="barcode"></div><div class="thanks">*** 감사합니다 ***</div><div class="stamp hide" id="stamp">제출 완료</div>
+    <p class="hint noprint" id="reflect"></p>
+  </div>
+  <div class="toast noprint" id="toast"></div>
+  <div class="actions noprint">
+    <button class="btn ghost" id="edit">← 장바구니 고치기</button>
+    <button class="btn" id="final" disabled>✅ 최종 제출하기</button>
+    <button class="btn hide" id="print">🖨️ 인쇄 / PDF 저장</button>
+    <button class="btn hide" id="copy">📋 결과 복사</button>
+    <button class="btn ghost" id="again">처음으로</button>
+  </div>
+</section>
+</div>
+
+<script>
+const MISSIONS=[
+ {id:'curry',emoji:'🍛',name:'카레 만들기',budget:15000,tip:'💡 영양 균형을 생각해 채소, 단백질, 곡물을 골고루 담아 보세요. (4인 가족 기준)',
+  items:[['🥔','감자 (1개)',700],['🥕','당근 (1개)',800],['🧅','양파 (1개)',600],['🍗','닭고기 (500g)',5500],['🥩','소고기 (300g)',7500],['🍛','카레 가루',3000],['🍚','쌀 (1kg)',3500],['🥦','브로콜리',2500],['🥛','우유 (1L)',2800],['🍫','초콜릿 과자',2000],['🥤','탄산음료',2200],['🍎','사과 (1개)',1500]]},
+ {id:'camp',emoji:'⛺',name:'여름캠핑 준비하기',budget:30000,tip:'💡 꼭 필요한 물건을 먼저! 일회용품 대신 오래 쓸 수 있는 물건을 고르면 탄소도 줄일 수 있어요. 🌱',
+  items:[['🔦','손전등',5000],['🧴','모기 기피제',4500],['🧴','자외선 차단제',7000],['🥤','물통 (재사용)',6000],['🥤','일회용 컵 (10개)',2000],['🍖','고기 (600g)',12000],['🌽','옥수수 (3개)',3000],['🍉','수박 (1통)',9000],['🧦','여벌 양말',3000],['🔥','숯 (1봉)',6000],['🍡','마시멜로',2500],['🎲','보드게임',8000]]},
+ {id:'party',emoji:'🎂',name:'친구 생일파티 준비하기',budget:25000,tip:'💡 친구 5명이 함께해요. 먹을거리, 장식, 선물을 시간과 예산에 맞게 나눠 보세요.',
+  items:[['🎂','생일 케이크',12000],['🎈','풍선 (10개)',2500],['🎉','파티 모자 (5개)',3000],['🕯️','초 세트',1000],['🍕','피자 (1판)',9000],['🍿','팝콘',2000],['🧃','주스 (6개입)',4000],['🍪','쿠키 상자',3500],['🎁','선물 (문구 세트)',8000],['🎀','포장지·리본',1500],['🍬','사탕 봉지',1800],['📸','즉석 사진 필름',7000]]}
+];
+const $=id=>document.getElementById(id);
+const won=n=>n.toLocaleString('ko-KR')+'원';
+let M=null,Q={};
+
+function show(id){['s1','s2','s3'].forEach(s=>$(s).classList.toggle('hide',s!==id));window.scrollTo(0,0)}
+function total(){return M.items.reduce((s,it,i)=>s+it[2]*(Q[i]||0),0)}
+function count(){return Object.values(Q).reduce((a,b)=>a+b,0)}
+
+$('missions').innerHTML=MISSIONS.map(m=>`<button class="mcard" data-id="${m.id}"><div class="e">${m.emoji}</div><b>${m.name}</b><div class="p">예산 ${won(m.budget)}</div><small>시작하기 ▶</small></button>`).join('');
+$('missions').onclick=e=>{const b=e.target.closest('.mcard');if(!b)return;M=MISSIONS.find(m=>m.id===b.dataset.id);Q={};buildShop();show('s2')};
+
+function buildShop(){
+  $('mtitle').textContent=M.emoji+' '+M.name;$('bud').textContent=won(M.budget);$('tip').textContent=M.tip;
+  $('grid').innerHTML=M.items.map((it,i)=>`<div class="item" id="it${i}"><div class="e">${it[0]}</div><div class="n">${it[1]}</div><div class="pr">${won(it[2])}</div><div class="qty"><button data-i="${i}" data-d="-1" aria-label="빼기">−</button><span id="q${i}">0</span><button data-i="${i}" data-d="1" aria-label="담기">+</button></div></div>`).join('');
+  update();
+}
+$('grid').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const i=+b.dataset.i,d=+b.dataset.d,cur=Q[i]||0;
+  if(cur+d<0)return;
+  Q[i]=cur+d;if(!Q[i])delete Q[i];
+  update();
+};
+function update(){
+  const t=total(),rest=M.budget-t,over=rest<0;
+  $('spent').textContent=won(t);$('rest').textContent=won(rest);$('cnt').textContent=count();
+  $('rest').className='num '+(over?'over':'left');
+  $('fill').style.width=Math.min(100,t/M.budget*100)+'%';
+  $('meter').classList.toggle('full',over);
+  $('warn').classList.toggle('on',over);
+  $('submit').disabled=over||count()===0;
+  M.items.forEach((it,i)=>{
+    const q=Q[i]||0;$('q'+i).textContent=q;$('it'+i).classList.toggle('sel',q>0);
+  });
+}
+$('reset').onclick=()=>{Q={};update()};
+$('back').onclick=()=>show('s1');
+$('submit').onclick=()=>{
+  if(total()>M.budget)return;
+  const rows=M.items.map((it,i)=>Q[i]?`<tr><td>${it[0]} ${it[1]}</td><td>${Q[i]}개</td><td>${won(it[2]*Q[i])}</td></tr>`:'').join('');
+  $('rname').textContent=M.emoji+' '+M.name;
+  $('rdate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  $('rbody').innerHTML=rows;
+  $('rbud').textContent=won(M.budget);$('rspent').textContent=won(total());$('rrest').textContent=won(M.budget-total());
+  $('reflect').textContent='💬 생각해 보세요: 꼭 필요한 물건인가요? 더 싼 대신할 물건은 없었나요? 남은 돈은 어떻게 쓰면 좋을까요?';
+  $('toast').textContent='';resetFinal();
+  show('s3');
+};
+$('edit').onclick=()=>show('s2');
+$('again').onclick=()=>{$('reason').value='';show('s1')};
+const OUT=['print','copy','stamp','barcode'];
+function resetFinal(){
+  $('reason').readOnly=false;$('final').disabled=$('reason').value.trim().length<5;
+  $('final').classList.remove('hide');$('edit').classList.remove('hide');
+  OUT.forEach(id=>$(id).classList.add('hide'));
+  $('reasonP').textContent='✏️ 구매 이유\n'+$('reason').value;
+}
+$('reason').oninput=()=>{$('reasonP').textContent='✏️ 구매 이유\n'+$('reason').value;$('final').disabled=$('reason').value.trim().length<5};
+$('final').onclick=()=>{
+  $('reason').readOnly=true;$('final').classList.add('hide');$('edit').classList.add('hide');
+  OUT.forEach(id=>$(id).classList.remove('hide'));
+  $('toast').textContent='🎉 제출 완료! 영수증을 저장하거나 복사해 보세요.';
+};
+
+function resultText(){
+  const lines=M.items.map((it,i)=>Q[i]?`- ${it[0]} ${it[1]} × ${Q[i]} = ${won(it[2]*Q[i])}`:null).filter(Boolean);
+  return `[우리 반 스마트 장보기 미션]\n미션: ${M.name}\n예산: ${won(M.budget)}\n\n${lines.join('\n')}\n\n사용 금액: ${won(total())}\n남은 잔액: ${won(M.budget-total())}\n\n구매 이유:\n${$('reason').value||'(작성 안 함)'}`;
+}
+$('copy').onclick=async()=>{
+  const txt=resultText();
+  try{await navigator.clipboard.writeText(txt);$('toast').textContent='✅ 복사했어요! 붙여넣기 해서 저장하세요.'}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');$('toast').textContent='✅ 복사했어요!'}catch(_){$('toast').textContent='복사에 실패했어요. 인쇄 버튼을 이용해 주세요.'}
+    ta.remove();
+  }
+};
+$('print').onclick=()=>{$('reasonP').textContent='✏️ 구매 이유\n'+$('reason').value;try{window.print()}catch(e){$('toast').textContent='인쇄가 막혀 있어요. 복사 버튼을 이용해 주세요.'}};
+</script>
+</body>
+</html>
